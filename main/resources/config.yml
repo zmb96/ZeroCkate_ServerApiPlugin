@@ -1,0 +1,54 @@
+server:
+  sf:
+    model:
+      api:
+        v1:
+          JoQMess:
+            jm: "&7[&a+&7]&r &aSF-Game&7：&a玩家&b{player}&a加入了游戏！"
+            qm: "&7[&c-&7]&r &cSF-Game&7：&c玩家&b{player}&c退出了游戏！"
+            NewPlayerJoin: "&a&l欢迎&6&l新玩家&c&l{player}&e&l加入了服务器！！！"
+          PlayerChat:
+            message: "&7[ &a{id}&7 ]&r &a&l{player}&7：&b{message}"
+            opsuuid: "f4eb175e-7a1f-3322-a61f-017f3fe51cf3"
+            tags:
+
+        v2:
+
+# 数据库配置
+database:
+  # 是否启用 MySQL（false 则使用 SQLite）
+  mysql:
+    enabled: false
+    host: localhost
+    port: 3306
+    database: minecraft
+    user: root
+    password: ""
+    prefix: "sf_"
+  # SQLite 配置（mysql.enabled=false 时使用）
+  sqlite:
+    file: data.db
+
+# 传送系统配置
+teleport:
+  # 冷却时间（秒），0 表示无冷却
+  cooldown:
+    spawn: 5
+    home: 5
+    warp: 5
+    back: 10
+    tpa: 10
+    tpahere: 10
+    tp: 0
+    tphere: 0
+  # 延迟传送（秒），0 表示立即传送
+  delay:
+    spawn: 3
+    home: 3
+    warp: 3
+    back: 3
+    tpa: 3
+    tpahere: 3
+  # TPA 请求超时（秒）
+  tpa:
+    timeout: 60
