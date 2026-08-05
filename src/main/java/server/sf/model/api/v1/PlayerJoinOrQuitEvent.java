@@ -14,6 +14,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 
+@Deprecated
 public class PlayerJoinOrQuitEvent implements Listener {
     private final main plugin;
 

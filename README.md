@@ -12,6 +12,18 @@
 - [📦 安装](#-安装)
 - [🚀 快速开始](#-快速开始)
 - [🎮 命令参考](#-命令参考)
+    - [传送命令](#传送命令)
+    - [TPA 命令](#tpa-命令)
+    - [管理员命令](#管理员命令)
+    - [系统命令](#系统命令)
+    - [世界管理命令](#世界管理命令)
+    - [聊天系统命令](#聊天系统命令)
+    - [权限系统命令](#权限系统命令)
+    - [附魔系统命令](#附魔系统命令)
+    - [物品系统命令](#物品系统命令)
+- [⚡ SF Tick 系统](#-sf-tick-系统)
+- [🔮 自定义附魔系统](#-自定义附魔系统)
+- [🎒 自定义物品系统](#-自定义物品系统)
 - [🔐 权限列表](#-权限列表)
 - [⚙️ 配置文件](#️-配置文件)
 - [💻 开发者 API](#-开发者-api)
@@ -27,11 +39,17 @@
 ## ✨ 特性
 
 - 🚀 **极简 API**：一行代码完成日志、经济、传送、调度等操作
-- 🎯 **28+ 内置命令**：传送、家、传送点、TPA、管理员工具一应俱全
+- 🎯 **40+ 内置命令**：传送、家、传送点、TPA、管理员工具、世界管理、聊天、权限一应俱全
 - 💰 **双后端经济**：自动检测 EssentialsX / Vault，无需手动配置
 - 🗄️ **持久化存储**：内置 SQLite / MySQL 切换，零配置开箱即用
 - 🔔 **完整事件系统**：120+ Bukkit 事件分类封装，链式调用
 - 🛡️ **管理员工具**：无敌、隐身、飞行、治疗、清包等 12 个常用命令
+- ⚡ **SF Tick 系统**：独立线程 100tick/秒，不干扰原版 20tick/秒
+- 🌍 **世界管理**：时间/天气/难度/PVP/世界边界/生物生成/火焰蔓延/预设
+- 💬 **聊天系统**：多频道、禁言、脏话过滤、聊天格式化
+- 🔑 **权限系统**：权限组、继承、前缀后缀、个人权限
+- 🔮 **附魔注册系统**：继承 `SEnchantment` 自定义附魔，铁砧附魔支持
+- 🎒 **物品注册系统**：继承 `SItem` 自定义物品，属性加成、交互事件
 - 🔌 **第三方接入**：通过 Bukkit ServicesManager 暴露 `SFApi` 接口
 - ⚡ **异步安全**：经济操作自动回滚、传送防移动取消
 
@@ -506,6 +524,629 @@ lp group admin permission set sf.admin.* true
 
 `/servermanagement` **别名**：`sm`, `svm`
 
+### 世界管理命令
+
+**命令**：`/sfworld`（别名 `/sfw`） ｜ **权限**：`sf.admin.world`
+
+#### 时间控制
+
+| 用法 | 说明 |
+|------|------|
+| `/sfworld time <数值> [世界]` | 设置时间为指定值 |
+| `/sfworld day [世界]` | 设为白天（1000） |
+| `/sfworld night [世界]` | 设为夜晚（13000） |
+| `/sfworld noon [世界]` | 设为中午（6000） |
+| `/sfworld midnight [世界]` | 设为午夜（18000） |
+| `/sfworld locktime [世界]` | 锁定当前时间 |
+| `/sfworld unlocktime [世界]` | 解锁时间流动 |
+
+#### 天气控制
+
+| 用法 | 说明 |
+|------|------|
+| `/sfworld weather sun [世界]` | 设为晴天 |
+| `/sfworld weather rain [世界]` | 设为雨天 |
+| `/sfworld weather storm [世界]` | 设为雷暴 |
+
+#### 难度与 PVP
+
+| 用法 | 说明 |
+|------|------|
+| `/sfworld difficulty <peaceful\|easy\|normal\|hard> [世界]` | 设置难度 |
+| `/sfworld pvp <true\|false> [世界]` | 开关 PVP |
+
+#### 世界边界
+
+| 用法 | 说明 |
+|------|------|
+| `/sfworld border size <数值> [秒数] [世界]` | 设置边界大小（可选过渡秒数） |
+| `/sfworld border center <x> <z> [世界]` | 设置边界中心 |
+| `/sfworld border reset [世界]` | 重置世界边界 |
+
+#### 世界规则
+
+| 用法 | 说明 |
+|------|------|
+| `/sfworld mob <true\|false> [世界]` | 开关生物生成 |
+| `/sfworld fire <true\|false> [世界]` | 开关火焰蔓延 |
+
+#### 预设管理
+
+| 用法 | 说明 |
+|------|------|
+| `/sfworld preset save <名称> [世界]` | 保存当前世界状态为预设 |
+| `/sfworld preset apply <名称> [世界]` | 应用预设到世界 |
+| `/sfworld preset list` | 列出所有预设 |
+
+#### 信息查询
+
+| 用法 | 说明 |
+|------|------|
+| `/sfworld info [世界]` | 查看世界详细信息 |
+| `/sfworld list` | 列出所有已加载世界 |
+
+### 聊天系统命令
+
+**命令**：`/sfchat`（别名 `/sfc`）
+
+#### 频道管理
+
+| 用法 | 说明 |
+|------|------|
+| `/sfchat channel [名称]` | 查看/切换频道 |
+| `/sfchat create <名称> [范围] [前缀]` | 创建新频道（范围=0 全局，>0 附近格数） |
+| `/sfchat delete <名称>` | 删除自定义频道 |
+
+内置频道：
+- `global` — 全局频道（默认）
+- `local` — 附近频道（100 格内可见）
+- `staff` — 管理频道
+
+**示例**：
+```
+/sfchat create trade 0 §7[§6交易§7]
+/sfchat create city 200 §7[§a同城§7]
+/sfchat channel trade
+```
+
+#### 禁言管理
+
+| 用法 | 说明 |
+|------|------|
+| `/sfchat mute <玩家> [秒数] [原因]` | 禁言玩家（秒数=0 永久） |
+| `/sfchat unmute <玩家>` | 解除禁言 |
+| `/sfchat muteinfo <玩家>` | 查看禁言信息 |
+
+**权限**：`sf.admin.chat`
+
+#### 屏蔽词
+
+| 用法 | 说明 |
+|------|------|
+| `/sfchat block <词语>` | 添加屏蔽词 |
+| `/sfchat unblock <词语>` | 移除屏蔽词 |
+| `/sfchat blocklist` | 查看屏蔽词列表 |
+
+#### 其他
+
+| 用法 | 说明 |
+|------|------|
+| `/sfchat clear` | 清空聊天屏幕 |
+
+### 权限系统命令
+
+**命令**：`/sfperm`（别名 `/sfp`） ｜ **权限**：`sf.admin.permission`
+
+#### 权限组管理
+
+| 用法 | 说明 |
+|------|------|
+| `/sfperm group create <组名> [前缀] [后缀] [权重]` | 创建权限组 |
+| `/sfperm group setprefix <组名> <前缀>` | 设置组前缀 |
+| `/sfperm group setsuffix <组名> <后缀>` | 设置组后缀 |
+| `/sfperm group addperm <组名> <权限>` | 添加组权限 |
+| `/sfperm group rmperm <组名> <权限>` | 移除组权限 |
+| `/sfperm group inherit <组名> <父组名>` | 设置组继承 |
+
+#### 玩家权限
+
+| 用法 | 说明 |
+|------|------|
+| `/sfperm set <玩家> <组名>` | 设置玩家所属组 |
+| `/sfperm addperm <玩家> <权限>` | 给玩家添加个人权限 |
+| `/sfperm rmperm <玩家> <权限>` | 移除玩家个人权限 |
+
+#### 信息查询
+
+| 用法 | 说明 |
+|------|------|
+| `/sfperm info <玩家>` | 查看玩家权限信息 |
+| `/sfperm list` | 列出所有权限组 |
+
+内置权限组：
+- `default` — 默认组（权重 0）
+- `vip` — VIP 组（权重 10，跳过传送冷却）
+- `mod` — 管理组（权重 50，继承 vip，聊天管理权限）
+- `admin` — 管理员组（权重 100，继承 mod，全部管理权限）
+- `owner` — 服主组（权重 200，继承 admin，所有权限）
+
+### 附魔系统命令
+
+**命令**：`/sfenchant`（别名 `/sfe`） ｜ **权限**：`sf.admin.enchant`
+
+| 用法 | 说明 |
+|------|------|
+| `/sfenchant list` | 列出所有已注册附魔 |
+| `/sfenchant book <id> [等级] [数量]` | 获取附魔书 |
+| `/sfenchant apply <id> [等级]` | 将附魔应用到手持物品 |
+| `/sfenchant remove <id>` | 移除手持物品上的指定附魔 |
+| `/sfenchant info <id>` | 查看附魔详情 |
+| `/sfenchant hand` | 查看手持物品的所有附魔 |
+| `/sfenchant reload` | 重置附魔系统 |
+
+### 物品系统命令
+
+**命令**：`/sfitem`（别名 `/sfi`） ｜ **权限**：`sf.admin.item`
+
+| 用法 | 说明 |
+|------|------|
+| `/sfitem list` | 列出所有已注册物品 |
+| `/sfitem give <id> [数量] [玩家]` | 给予物品 |
+| `/sfitem info <id>` | 查看物品详情 |
+| `/sfitem hand` | 查看手中物品信息 |
+| `/sfitem reload` | 重置物品系统 |
+
+---
+
+## ⚡ SF Tick 系统
+
+SF 插件内置独立的 Tick 调度系统，**1 秒 = 100 tick**，在独立线程运行，完全不干扰原版 20tick/秒的游戏循环。
+
+### 核心概念
+
+| 概念 | 说明 |
+|------|------|
+| SF Tick | SF 自定义的时间单位，1 秒 = 100 SF tick |
+| Bukkit Tick | 原版游戏 tick，1 秒 = 20 tick |
+| 独立线程 | SF Tick 在 `ScheduledExecutorService` 上运行，不阻塞主线程 |
+
+### 换算关系
+
+| SF Tick | 秒 | Bukkit Tick |
+|---------|-----|-------------|
+| 1 | 0.01s | 0.2 |
+| 10 | 0.1s | 2 |
+| 50 | 0.5s | 10 |
+| 100 | 1s | 20 |
+| 600 | 6s | 120 |
+| 1000 | 10s | 200 |
+| 6000 | 60s | 1200 |
+
+### API 用法
+
+```java
+TickManager tick = SF.sf().tick();
+
+// 延迟执行（100 tick = 1 秒后）
+tick.runLater(sfTick -> {
+    SF.sf().info("1秒后执行");
+}, 100);
+
+// 定时循环（每 100 tick = 每秒）
+tick.runTimer(sfTick -> {
+    SF.sf().info("每秒执行一次，当前 tick: " + sfTick);
+}, 100);
+
+// 带延迟的定时循环
+tick.runTimer(sfTick -> {
+    SF.sf().broadcast("每分钟公告");
+}, 6000, 6000);  // 延迟 60 秒，每 60 秒
+
+// 取消任务
+long taskId = tick.runTimer(t -> { ... }, 100);
+tick.cancel(taskId);
+
+// 获取当前 tick
+long now = tick.now();
+
+// 时间换算
+long seconds = tick.toSeconds(500);         // 5
+long sfTicks = tick.fromSeconds(30);        // 3000
+long bukkitTicks = tick.toBukkitTicks(100);  // 20
+
+// 需要回到主线程操作 Bukkit API 时
+tick.runSync(() -> {
+    player.sendMessage("在主线程执行");
+});
+
+// 延迟回到主线程
+tick.runSyncLater(() -> {
+    player.sendMessage("1秒后在主线程执行");
+}, 100);
+```
+
+### 常量
+
+```java
+TickManager.TICKS_PER_SECOND  // 100
+TickManager.TICK_INTERVAL_MS  // 10
+```
+
+### 注意事项
+
+- SF Tick 系统在**独立线程**运行，不要在 tick 回调中直接调用 Bukkit API
+- 需要操作 Bukkit API 时使用 `runSync()` / `runSyncLater()` 切回主线程
+- 所有新 API 的定时功能（如禁言倒计时）都基于此系统
+- 插件卸载时自动关闭 tick 线程
+
+---
+
+## 🔮 自定义附魔系统
+
+SF 提供全新的附魔注册系统，通过继承 `SEnchantment` 类即可创建自定义附魔，玩家可通过**铁砧**附魔到工具上。
+
+### 创建自定义附魔
+
+```java
+import server.sf.model.api.v2.feature.enchant.SEnchantment;
+import org.bukkit.attribute.Attribute;
+import java.util.*;
+
+public class MyEnchant extends SEnchantment {
+
+    @Override
+    public String id() { return "my_enchant"; }
+
+    @Override
+    public String displayName() { return "§a我的附魔"; }
+
+    @Override
+    public int maxLevel() { return 3; }
+
+    @Override
+    public Set<String> applicableItems() {
+        return new HashSet<>(Arrays.asList("SWORD", "AXE"));
+    }
+
+    @Override
+    public List<AttributeBonus> attributes() {
+        return Arrays.asList(
+            AttributeBonus.add("dmg", "GENERIC_ATTACK_DAMAGE", 2.0, 1.0)
+        );
+    }
+
+    @Override
+    public void onAttack(EnchantContext ctx) {
+        if (ctx.level() >= 2) {
+            ctx.target().setFireTicks(40);
+        }
+    }
+
+    @Override
+    public void onDamaged(EnchantContext ctx) {
+        if (Math.random() < 0.1 * ctx.level()) {
+            ctx.player().setHealth(ctx.player().getHealth() + 2);
+        }
+    }
+}
+```
+
+### 注册附魔
+
+```java
+SF.sf().enchant().register(new MyEnchant());
+```
+
+### SEnchantment 可重写方法
+
+| 方法 | 说明 |
+|------|------|
+| `id()` | 附魔唯一标识（必填） |
+| `displayName()` | 游戏内显示名称（必填） |
+| `maxLevel()` | 最大等级（必填） |
+| `applicableItems()` | 可附魔物品类型（必填） |
+| `attributes()` | 属性加成列表 |
+| `conflictGroups()` | 冲突组（同组互斥） |
+| `anvilCost()` | 铁砧消耗经验等级 |
+| `onAttack(ctx)` | 攻击时触发 |
+| `onDamaged(ctx)` | 被攻击时触发 |
+| `onEquip(ctx)` | 装备时触发 |
+| `onUnequip(ctx)` | 卸下时触发 |
+| `onTick(ctx)` | 每刻触发（性能敏感） |
+
+### AttributeBonus
+
+```java
+// AttributeBonus.add(名称, 属性名, 基础值, 每级增量)
+AttributeBonus.add("health", "GENERIC_MAX_HEALTH", 4.0, 2.0)
+// 等级1: +4.0, 等级2: +6.0, 等级3: +8.0
+
+// AttributeBonus.multiply(名称, 属性名, 基础值, 每级增量)
+AttributeBonus.multiply("speed", "GENERIC_MOVEMENT_SPEED", 0.05, 0.02)
+// 等级1: +5%, 等级2: +7%, 等级3: +9%
+```
+
+### 可用属性列表
+
+所有属性基于 Bukkit `Attribute` 枚举，系统通过反射自动查找，依次尝试 `GENERIC_` / `PLAYER_` / 无前缀三种写法，兼容不同 Paper 版本：
+
+| 属性名 | 说明 | 操作类型建议 |
+|--------|------|-------------|
+| `GENERIC_MAX_HEALTH` | 最大生命值 | ADD (1.0 = 半颗心) |
+| `GENERIC_ATTACK_DAMAGE` | 攻击伤害 | ADD (1.0 = 半颗心) |
+| `GENERIC_ATTACK_SPEED` | 攻击速度 | ADD (4.0 = 每秒多一次) |
+| `GENERIC_ARMOR` | 护甲值 | ADD |
+| `GENERIC_ARMOR_TOUGHNESS` | 护甲韧性 | ADD |
+| `GENERIC_KNOCKBACK_RESISTANCE` | 击退抗性 | ADD (1.0 = 完全免疫) |
+| `GENERIC_MOVEMENT_SPEED` | 移动速度 | MULTIPLY (0.05 = +5%) |
+| `GENERIC_FLYING_SPEED` | 飞行速度 | MULTIPLY |
+| `GENERIC_LUCK` | 幸运值 | ADD |
+| `GENERIC_BLOCK_INTERACTION_RANGE` | 方块交互距离 | ADD (1.0 = +1格) |
+| `GENERIC_ENTITY_INTERACTION_RANGE` | 实体交互距离 | ADD (1.0 = +1格) |
+| `GENERIC_GRAVITY` | 重力 | MULTIPLY (1.0 = 默认) |
+| `GENERIC_JUMP_STRENGTH` | 跳跃高度 | MULTIPLY |
+| `GENERIC_SCALE` | 体型大小 | MULTIPLY (1.0 = 默认) |
+| `GENERIC_STEP_HEIGHT` | 自动跨越高度 | ADD (0.5 = 半格) |
+| `GENERIC_FALL_DAMAGE_MULTIPLIER` | 摔落伤害倍率 | MULTIPLY |
+| `GENERIC_SAFE_FALL_DISTANCE` | 安全摔落距离 | ADD |
+
+> 如果当前服务端版本不支持某个属性，系统会静默跳过，不会崩溃。
+
+### 附魔书获取方式
+
+#### 方式一：管理员命令
+
+```
+/sfenchant book <id> [等级]
+```
+
+| 参数 | 说明 |
+|------|------|
+| `id` | 附魔 ID，如 `ancestral_might` |
+| `等级` | 可选，指定等级（默认满级） |
+
+**示例：**
+```
+/sfenchant book ancestral_might       # 获取满级祖宗之力附魔书
+/sfenchant book ancestral_might 2     # 获取2级附魔书
+```
+
+#### 方式二：代码 API
+
+```java
+EnchantManager enchant = SF.sf().enchant();
+
+// 创建附魔书（返回 ItemStack）
+ItemStack book = enchant.createBook("ancestral_might");
+ItemStack bookLv2 = enchant.createBook("ancestral_might", 2);
+
+// 直接给予玩家
+enchant.giveBook(player, "ancestral_might");
+enchant.giveBook(player, "ancestral_might", 2);
+```
+
+#### 方式三：普通玩家被动获取（箱子战利品）
+
+玩家打开**箱子**时，系统有概率自动生成附魔书到箱子中：
+
+- 默认概率：**5%** 每本附魔书
+- 每个箱子最多：**2** 本
+- 可通过 API 调整概率和数量
+
+```java
+// 获取 EnchantChestListener 实例调整配置
+// 注意：监听器在 enchant() 初始化时创建
+EnchantChestListener chestListener = ...; // 需自行保存引用
+
+chestListener.setDefaultChance(0.10);     // 设置默认概率 10%
+chestListener.setMaxLootPerChest(3);      // 每箱最多 3 本
+chestListener.setLootChance("my_enchant", 0.20); // 单独设置某附魔概率
+chestListener.addBlacklistWorld("world_nether"); // 黑名单世界
+```
+
+> 提示：同一个箱子只会生成一次，第二次打开不会再生成。
+
+#### 方式四：附魔台获取
+
+玩家使用**附魔台**附魔物品时，有概率获得自定义附魔：
+
+- 默认概率：**15%** + 书架等级加成
+- 每级书架额外 +5% 概率
+- 玩家会收到提示：`✨ 附魔台为你附上了 XXX!`
+- 只有物品类型匹配的附魔才会出现
+
+```java
+// 获取 EnchantTableListener 实例调整配置
+EnchantTableListener tableListener = ...; // 需自行保存引用
+
+tableListener.setBaseChance(0.20);        // 基础概率 20%
+tableListener.setPerLevelBonus(0.08);     // 每级书架加成 8%
+tableListener.setEnchantChance("my_enchant", 0.30); // 单独设置某附魔概率
+tableListener.addBlacklistWorld("world_nether");    // 黑名单世界
+```
+
+> 提示：宝藏附魔（`isTreasure() == true`）不会通过附魔台获取。
+
+### 铁砧附魔
+
+1. 将附魔书放在铁砧左侧
+2. 将工具放在铁砧右侧
+3. 消耗经验即可附魔
+
+**附魔规则：**
+- 附魔书等级 < 物品现有等级：升级一级
+- 附魔书等级 ≥ 物品现有等级：取最高等级
+- 与现有附魔冲突时无法附魔
+- 消耗经验 = `anvilCost() × 最终等级`
+
+---
+
+## 🎒 自定义物品系统
+
+SF 提供物品注册系统，通过继承 `SItem` 类即可创建自定义物品，支持属性加成、右键/左键交互、装备音效等。
+
+### 创建自定义物品
+
+```java
+import server.sf.model.api.v2.feature.item.SItem;
+import org.bukkit.Material;
+import org.bukkit.event.player.PlayerInteractEvent;
+import java.util.*;
+
+public class MyItem extends SItem {
+
+    @Override
+    public String id() { return "my_item"; }
+
+    @Override
+    public String displayName() { return "§a我的神器"; }
+
+    @Override
+    public Material material() { return Material.DIAMOND_SWORD; }
+
+    @Override
+    public List<String> lore() {
+        return Arrays.asList("§7一把传说中的武器", "§7右键触发特殊效果");
+    }
+
+    @Override
+    public List<ItemAttributeBonus> attributes() {
+        return Arrays.asList(
+            new ItemAttributeBonus("dmg", "GENERIC_ATTACK_DAMAGE", 5.0, 0,
+                AttributeModifier.Operation.ADD_NUMBER, EquipmentSlot.HAND)
+        );
+    }
+
+    @Override
+    public boolean onRightClick(PlayerInteractEvent e) {
+        Player p = e.getPlayer();
+        p.setVelocity(p.getLocation().getDirection().multiply(2));
+        p.getWorld().spawnParticle(Particle.FLAME, p.getLocation(), 30);
+        return true;  // 取消原版右键行为
+    }
+
+    @Override
+    public boolean onLeftClick(PlayerInteractEvent e) {
+        e.getPlayer().sendMessage("§c左键触发！");
+        return true;
+    }
+}
+```
+
+### 注册物品
+
+```java
+SF.sf().item().register(new MyItem());
+```
+
+### SItem 可重写方法
+
+| 方法 | 说明 |
+|------|------|
+| `id()` | 物品唯一标识（必填） |
+| `displayName()` | 显示名称（必填） |
+| `material()` | 原版物品材质（必填） |
+| `lore()` | 物品描述 |
+| `attributes()` | 属性加成列表 |
+| `onRightClick(e)` | 右键交互 |
+| `onLeftClick(e)` | 左键交互 |
+| `onEquip(e)` | 装备时触发 |
+| `onUnequip(e)` | 卸下时触发 |
+| `customModelData()` | 自定义模型数据 |
+
+### 物品获取方式
+
+#### 方式一：管理员命令
+
+```
+/sfitem give <id> [数量] [玩家]
+```
+
+| 参数 | 说明 |
+|------|------|
+| `id` | 物品 ID，如 `magic_scepter` |
+| `数量` | 可选，物品数量（默认 1） |
+| `玩家` | 可选，目标玩家（默认自己） |
+
+**示例：**
+```
+/sfitem give magic_scepter                  # 给自己1个
+/sfitem give magic_scepter 5                # 给自己5个
+/sfitem give magic_scepter 1 Notch          # 给Notch1个
+```
+
+#### 方式二：代码 API
+
+```java
+ItemManager item = SF.sf().item();
+
+// 给予玩家物品
+item.give(player, "magic_scepter");
+item.give(player, "magic_scepter", 5);
+
+// 创建物品（用于 GUI 或箱子）
+ItemStack scepter = item.create("magic_scepter");
+ItemStack scepter5 = item.create("magic_scepter", 5);
+
+// 检查/消耗物品
+boolean has = item.has(player, "magic_scepter");
+int count = item.count(player, "magic_scepter");
+item.consume(player, "magic_scepter");
+item.consume(player, "magic_scepter", 3);
+```
+
+#### 方式三：普通玩家被动获取（箱子战利品）
+
+玩家打开**箱子**时，系统有概率自动生成自定义物品到箱子中：
+
+- 默认概率：**3%** 每个物品
+- 每个箱子最多：**1** 件
+- 可通过 API 调整概率和数量
+
+```java
+// 获取 ItemChestListener 实例调整配置
+ItemChestListener chestListener = ...; // 需自行保存引用
+
+chestListener.setDefaultChance(0.05);     // 设置默认概率 5%
+chestListener.setMaxLootPerChest(2);       // 每箱最多 2 件
+chestListener.setItemChance("my_item", 0.10); // 单独设置某物品概率
+chestListener.addBlacklistWorld("world_nether"); // 黑名单世界
+```
+
+> 提示：同一个箱子只会生成一次，第二次打开不会再生成。
+
+### ItemAttributeBonus
+
+```java
+new ItemAttributeBonus(
+    "唯一名称",           // 属性标识
+    "GENERIC_ATTACK_DAMAGE", // Bukkit 属性名
+    5.0,                    // 基础值
+    0,                      // 额外值
+    AttributeModifier.Operation.ADD_NUMBER, // 操作类型
+    EquipmentSlot.HAND      // 装备槽
+)
+```
+
+### 可用属性
+
+物品系统同样使用 Bukkit `Attribute` 枚举，与附魔系统共用同一套反射查找逻辑。完整属性列表见[附魔系统 - 可用属性列表](#可用属性列表)。
+
+装备槽（`EquipmentSlot`）可选值：
+
+| 装备槽 | 说明 |
+|--------|------|
+| `HAND` | 主手 |
+| `OFF_HAND` | 副手 |
+| `HEAD` | 头部 |
+| `CHEST` | 胸部 |
+| `LEGS` | 腿部 |
+| `FEET` | 脚部 |
+
+### 内置示例
+
+- **魔法权杖**（`magic_scepter`）：右键瞬移、左键粒子效果、速度加成
+
 ---
 
 ## 🔐 权限列表
@@ -544,6 +1185,11 @@ lp group admin permission set sf.admin.* true
 | `sf.admin.workbench` | 打开工作台 `/wb` | OP |
 | `sf.admin.clear` | 清空背包 `/clear` | OP |
 | `sf.admin.speed` | 设置速度 `/speed` | OP |
+| `sf.admin.world` | 世界管理 `/sfworld` | OP |
+| `sf.admin.chat` | 聊天管理 `/sfchat` | OP |
+| `sf.admin.permission` | 权限管理 `/sfperm` | OP |
+| `sf.admin.enchant` | 附魔管理 `/sfenchant` | OP |
+| `sf.admin.item` | 物品管理 `/sfitem` | OP |
 
 ### 系统权限
 
@@ -861,6 +1507,10 @@ public interface SFApi {
     SFScheduler scheduler();
     SFPlayerOps players();
     SFServerOps server();
+    TickManager tick();
+    ChatManager chat();
+    WorldManager world();
+    PermissionManager permission();
 
     // 日志快捷方法
     void info(String msg);
@@ -1048,6 +1698,292 @@ server.broadcast("permission.node", "只有特定权限的玩家能看到");
 server.msg(sender, "发送消息给 sender");
 ```
 
+**TickManager - SF Tick 系统**
+
+```java
+TickManager tick = api.tick();
+
+tick.runLater(sfTick -> { ... }, 100);        // 1秒后执行
+tick.runTimer(sfTick -> { ... }, 100);         // 每秒执行
+tick.runTimer(sfTick -> { ... }, 200, 100);    // 延迟2秒后每秒执行
+tick.cancel(taskId);                           // 取消任务
+tick.now();                                    // 当前 tick
+tick.toSeconds(500);                           // 5
+tick.fromSeconds(30);                          // 3000
+tick.runSync(() -> { ... });                   // 切回主线程
+tick.runSyncLater(() -> { ... }, 100);         // 1秒后切回主线程
+```
+
+**ChatManager - 聊天系统**
+
+`ChatManager` 提供多频道聊天、禁言、屏蔽词过滤、消息格式化等功能。通过 `SF.sf().chat()` 获取实例。
+
+#### 频道管理 API
+
+| 方法 | 参数 | 返回值 | 说明 |
+|------|------|--------|------|
+| `registerChannel(ChatChannel)` | 频道对象 | `void` | 注册新频道 |
+| `unregisterChannel(String)` | 频道名 | `void` | 删除频道 |
+| `getChannel(String)` | 频道名 | `ChatChannel` | 按名称获取频道 |
+| `getChannel(Player)` | 玩家 | `ChatChannel` | 获取玩家当前所在频道 |
+| `setChannel(Player, String)` | 玩家, 频道名 | `void` | 切换玩家频道 |
+| `allChannels()` | — | `Collection<ChatChannel>` | 获取所有已注册频道 |
+
+#### ChatChannel 构造
+
+```java
+new ChatManager.ChatChannel(name, prefix, range, cooldownTicks)
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `name` | `String` | 频道唯一标识（不区分大小写） |
+| `prefix` | `String` | 频道前缀，支持颜色代码，如 `"§7[§6交易§7] "` |
+| `range` | `Double` | `null` = 全局频道；`100.0` = 同世界 100 格内可见 |
+| `cooldownTicks` | `long` | 发言冷却（SF Tick，100 = 1 秒，0 = 无冷却） |
+
+#### 禁言 API
+
+| 方法 | 参数 | 返回值 | 说明 |
+|------|------|--------|------|
+| `mute(Player, long, String)` | 玩家, 秒数, 原因 | `void` | 禁言，秒数 ≤ 0 为永久 |
+| `unmute(Player)` | 玩家 | `void` | 解除禁言 |
+| `isMuted(Player)` | 玩家 | `boolean` | 是否被禁言（过期自动清除） |
+| `muteReason(Player)` | 玩家 | `String` | 获取禁言原因（未禁言返回 `null`） |
+| `muteRemaining(Player)` | 玩家 | `long` | 剩余禁言秒数（永久禁言返回 `Long.MAX_VALUE`） |
+
+> 禁言基于 SF Tick 系统，服务器重启后禁言状态会丢失（内存存储）。
+
+#### 屏蔽词 API
+
+| 方法 | 参数 | 返回值 | 说明 |
+|------|------|--------|------|
+| `addBlockedWord(String)` | 词语 | `void` | 添加屏蔽词（不区分大小写） |
+| `removeBlockedWord(String)` | 词语 | `void` | 移除屏蔽词 |
+| `blockedWords()` | — | `Set<String>` | 获取所有屏蔽词 |
+| `filterMessage(String)` | 原始消息 | `String` | 过滤消息中的屏蔽词（替换为 `*`） |
+
+#### 消息格式化 API
+
+| 方法 | 参数 | 返回值 | 说明 |
+|------|------|--------|------|
+| `format(Player, String)` | 玩家, 消息 | `String` | 格式化消息，自动读取权限系统的前缀后缀 |
+
+默认格式模板：`<{prefix}{name}{suffix}> {message}`
+
+可通过反射修改 `defaultFormat.template` 来自定义：
+
+```java
+ChatManager chat = SF.sf().chat();
+chat.getDefaultFormat().template = "{prefix}{name}§7: {message}";
+```
+
+#### 收件人获取 API
+
+| 方法 | 参数 | 返回值 | 说明 |
+|------|------|--------|------|
+| `getRecipients(Player, ChatChannel)` | 发送者, 频道 | `Collection<Player>` | 根据频道范围获取可见玩家列表 |
+
+全局频道返回所有在线玩家；范围频道返回同世界指定距离内的玩家。
+
+#### 内置频道
+
+| 频道名 | 前缀 | 范围 | 说明 |
+|--------|------|------|------|
+| `global` | `§7[§a全§7] ` | 全局 | 默认频道，所有人可见 |
+| `local` | `§7[§e附近§7] ` | 100 格 | 同世界 100 格内可见 |
+| `staff` | `§7[§c管理§7] ` | 全局 | 管理员频道（需自行控制权限） |
+
+#### 完整使用示例
+
+```java
+ChatManager chat = SF.sf().chat();
+
+// ===== 频道管理 =====
+// 创建交易频道（全局可见，3秒冷却）
+chat.registerChannel(new ChatManager.ChatChannel(
+    "trade", "§7[§6交易§7] ", null, 300));
+
+// 创建同城频道（500格内可见）
+chat.registerChannel(new ChatManager.ChatChannel(
+    "city", "§7[§a同城§7] ", 500.0, 0));
+
+// 切换玩家频道
+chat.setChannel(player, "trade");
+
+// 获取玩家当前频道
+ChatManager.ChatChannel ch = chat.getChannel(player);
+SF.sf().info("玩家所在频道: " + ch.name + ", 前缀: " + ch.prefix);
+
+// 列出所有频道
+for (ChatManager.ChatChannel c : chat.allChannels()) {
+    SF.sf().info("频道: " + c.name + " 范围: " + c.range);
+}
+
+// 删除频道
+chat.unregisterChannel("city");
+
+// ===== 禁言 =====
+// 临时禁言 60 秒
+chat.mute(player, 60, "刷屏广告");
+
+// 永久禁言
+chat.mute(player, 0, "严重违规");
+
+// 检查禁言状态
+if (chat.isMuted(player)) {
+    SF.sf().info("已禁言，原因: " + chat.muteReason(player)
+        + "，剩余: " + chat.muteRemaining(player) + "秒");
+}
+
+// 解除禁言
+chat.unmute(player);
+
+// ===== 屏蔽词 =====
+// 添加屏蔽词
+chat.addBlockedWord("垃圾");
+chat.addBlockedWord("外挂");
+
+// 过滤消息
+String filtered = chat.filterMessage("你真垃圾，用外挂");  // 你真**，用**
+SF.sf().info(filtered);
+
+// 移除屏蔽词
+chat.removeBlockedWord("垃圾");
+
+// 获取所有屏蔽词
+Set<String> words = chat.blockedWords();
+SF.sf().info("当前屏蔽词: " + words);
+
+// ===== 消息格式化 =====
+// 自动读取权限系统前缀后缀
+String formatted = chat.format(player, "大家好");
+// 输出: <[VIP]玩家名> 大家好
+
+// ===== 获取收件人 =====
+ChatManager.ChatChannel channel = chat.getChannel(player);
+Collection<Player> recipients = chat.getRecipients(player, channel);
+for (Player r : recipients) {
+    r.sendMessage("收到消息");
+}
+```
+
+#### 第三方插件接入示例
+
+```java
+public class TradeChannelPlugin extends JavaPlugin {
+    @Override
+    public void onEnable() {
+        SF sf = getServer().getServicesManager().load(SF.class);
+        if (sf == null) return;
+
+        ChatManager chat = sf.chat();
+
+        // 注册交易频道
+        chat.registerChannel(new ChatManager.ChatChannel(
+            "trade", "§7[§6交易§7] ", null, 200));
+
+        // 注册切换频道命令
+        getCommand("trade").setExecutor((sender, cmd, label, args) -> {
+            if (!(sender instanceof Player p)) return true;
+            chat.setChannel(p, "trade");
+            p.sendMessage("§a已切换到交易频道");
+            return true;
+        });
+    }
+}
+```
+
+**WorldManager - 世界管理**
+
+```java
+WorldManager world = api.world();
+
+world.setDay(world);                    // 白天
+world.setNight(world);                  // 夜晚
+world.setTime(world, 6000);             // 自定义时间
+world.lockTime(world, 6000);            // 锁定时间
+world.unlockTime(world);                // 解锁
+
+world.setStorm(world, false);           // 晴天
+world.setThunder(world, true);          // 雷暴
+world.setDifficulty(world, Difficulty.HARD);
+world.setPvp(world, false);
+world.setBorder(world, 5000);           // 边界 5000 格
+world.setBorderCenter(world, 0, 0);
+world.setMobSpawning(world, false);
+world.setFireSpread(world, false);
+
+// 预设
+world.savePreset("survival", world);
+world.applyPreset("survival", world);
+```
+
+**PermissionManager - 权限系统**
+
+```java
+PermissionManager perm = api.permission();
+
+// 组管理
+perm.registerGroup(new PermissionManager.Group("vip", "§a[VIP] ", "", 10));
+perm.getGroup("vip");
+perm.allGroups();
+
+// 玩家权限
+perm.setGroup(player, "vip");
+perm.getGroup(player);                  // 获取玩家所在组
+perm.getPrefix(player);                 // 获取前缀
+perm.getSuffix(player);                 // 获取后缀
+perm.addPermission(player, "my.perm");
+perm.removePermission(player, "my.perm");
+perm.has(player, "my.perm");            // 检查权限
+perm.getEffectivePermissions(player);   // 获取所有有效权限
+perm.applyPermissions(player);          // 重新应用权限
+```
+
+**EnchantManager - 附魔系统**
+
+```java
+EnchantManager enchant = ((SF) api).enchant();
+
+enchant.register(new MyEnchant());
+enchant.get("my_enchant");
+enchant.all();
+enchant.apply(item, "my_enchant", 2);   // 给物品附魔
+enchant.remove(item, "my_enchant");
+enchant.getEnchants(item);              // 获取物品上的所有附魔
+
+// 附魔书操作
+enchant.createBook("my_enchant");              // 创建满级附魔书
+enchant.createBook("my_enchant", 2);           // 创建指定等级附魔书
+enchant.createBook(enchantObj, 3);             // 传 SEnchantment 对象
+enchant.giveBook(player, "my_enchant");        // 给予满级附魔书
+enchant.giveBook(player, "my_enchant", 2);     // 给予指定等级附魔书
+```
+
+**ItemManager - 物品系统**
+
+```java
+ItemManager item = ((SF) api).item();
+
+item.register(new MyItem());
+item.get("my_item");
+item.all();
+
+// 给予/创建
+item.give(player, "my_item");
+item.give(player, "my_item", 5);
+item.create("my_item");
+item.create("my_item", 3);
+
+// 检查/消耗
+item.has(player, "my_item");
+item.count(player, "my_item");
+item.consume(player, "my_item");
+item.consume(player, "my_item", 3);
+item.find(player, "my_item");           // 查找玩家背包中的物品数量
+```
+
 #### 异常处理
 
 所有 API 方法都会捕获内部异常并通过 logger 输出，不会抛出异常中断调用方代码。
@@ -1072,8 +2008,13 @@ SFApi api = SFApi.get();
 | `events.on/register` | ⚠️ | 必须主线程调用 |
 | `scheduler.runAsync` | ✅ | 任何线程可调用 |
 | `scheduler.run/runLater/runTimer` | ⚠️ | 必须主线程调用 |
+| `tick.runLater/runTimer` | ✅ | 独立线程，线程安全 |
+| `tick.runSync/runSyncLater` | ⚠️ | 从 tick 线程切回主线程 |
 | `teleport` | ⚠️ | 必须主线程调用 |
 | `broadcast/msg` | ⚠️ | 必须主线程调用 |
+| `chat.mute/unmute/isMuted` | ✅ | 线程安全 |
+| `permission.setGroup/addPermission` | ⚠️ | 必须主线程调用 |
+| `world.*` | ⚠️ | 必须主线程调用 |
 
 > 💡 不确定时，用 `api.run(() -> { ... })` 包裹代码确保主线程执行。
 
@@ -1656,6 +2597,96 @@ A：SF 使用 MIT 协议，允许商用、修改、分发，但需保留版权�
 
 本项目版本变更记录遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+### [1.2.0] - 2026-08-05
+
+#### ✨ 新增
+
+**附魔书被动获取**
+- `EnchantChestListener`：打开箱子有概率生成附魔书（默认 5%，每箱最多 2 本）
+- `EnchantTableListener`：附魔台附魔时有概率获得自定义附魔（默认 15% + 书架加成）
+- `EnchantManager.createBook()` / `giveBook()`：API 创建和给予附魔书
+
+**物品被动获取**
+- `ItemChestListener`：打开箱子有概率生成自定义物品（默认 3%，每箱最多 1 件）
+
+**交互距离系统**
+- `ReachManager`：动态调整玩家方块/实体交互距离
+- `ReachCommand`：`/sfreach`（`/sfre`）命令
+- 属性查找改用反射兼容不同 Paper 版本
+
+**属性查找日志**
+- 附魔和物品系统 `findAttribute()` 添加详细日志输出
+- 匹配成功：INFO 级别显示匹配的属性名
+- 匹配失败：WARN 级别显示尝试的候选列表
+
+**SF 注册修复**
+- SF 类同时注册 `SF.class` 和 `SFApi.class` 到 ServicesManager
+- 两种 `load()` 写法都能正常获取实例
+
+### [1.1.0] - 2026-08-04
+
+#### ✨ 新增
+
+**SF Tick 系统（v2/feature/tick/）**
+- `TickManager`：独立线程运行，1 秒 = 100 tick，不干扰原版 20tick/秒
+- `TickTask`：函数式接口，支持 lambda
+- `runLater` / `runTimer` / `cancel` 任务调度
+- `runSync` / `runSyncLater` 主线程切换
+- 时间换算：`toSeconds` / `fromSeconds` / `toBukkitTicks` / `fromBukkitTicks`
+- 所有新 API 的定时功能基于此系统
+
+**世界管理（v2/feature/world/）**
+- `WorldManager`：时间/天气/难度/PVP/边界/生物/火焰/预设
+- `WorldCommand`：`/sfworld`（`/sfw`）命令
+- 支持 15+ 子命令，含 Tab 补全
+- 世界预设保存/加载
+
+**聊天系统（v2/feature/chat/）**
+- `ChatManager`：多频道、禁言、屏蔽词、格式化
+- `ChatListener`：拦截聊天，频道分发
+- `ChatCommand`：`/sfchat`（`/sfc`）命令
+- 内置频道：global（全局）、local（附近 100 格）、staff（管理）
+- 支持动态创建/删除频道
+- 禁言基于 SF Tick 系统，支持临时/永久
+- 脏话过滤，自动替换屏蔽词
+- 与权限系统集成，自动读取前缀后缀
+
+**权限系统（v2/feature/permission/）**
+- `PermissionManager`：权限组、继承、前缀后缀、个人权限
+- `PermissionListener`：登录应用权限，退出清理
+- `PermissionCommand`：`/sfperm`（`/sfp`）命令
+- 内置组：default / vip / mod / admin / owner
+- 组继承链，权限自动传递
+- 通过 `PermissionAttachment` 注入 Bukkit 权限
+- 支持 `-` 前缀权限（否定权限）
+
+**附魔系统（v2/feature/enchant/）**
+- `SEnchantment` 抽象基类，继承即可注册自定义附魔
+- `EnchantManager` 管理注册/附魔/移除/创建附魔书
+- `EnchantAnvilListener` 铁砧附魔监听
+- `EnchantAttributeListener` 属性加成自动应用
+- `EnchantChestListener` 箱子战利品生成附魔书
+- `EnchantTableListener` 附魔台获取自定义附魔
+- `AncestralMightEnchant` 示例："祖宗之力"
+- `SFEnchantCommand`：`/sfenchant`（`/sfe`）命令
+- 使用 `PersistentDataContainer` 存储，不依赖原版附魔注册表
+
+**物品系统（v2/feature/item/）**
+- `SItem` 抽象基类，继承即可注册自定义物品
+- `ItemManager` 管理注册/给予/消耗/查询
+- `ItemListener` 交互监听（右键/左键/装备）
+- `ItemChestListener` 箱子战利品生成自定义物品
+- `MagicScepterItem` 示例："魔法权杖"
+- `SFItemCommand`：`/sfitem`（`/sfi`）命令
+
+#### 🛠️ 变更
+- `SF.java` 新增 `tick()` / `chat()` / `world()` / `permission()` / `enchant()` / `item()` 入口方法
+- `SFApi` 接口新增 `tick()` / `chat()` / `world()` / `permission()` 方法
+- `plugin.yml` 新增 6 个命令和 6 个权限节点
+- README.md 全面更新，新增第二阶段文档
+
+---
+
 ### [1.0.0] - 2026-08-02
 
 首个正式版本发布！
@@ -1799,7 +2830,13 @@ server.sf.model.api.v2/
 └── feature/             # 功能模块
     ├── teleport/        # 传送系统
     ├── tpa/             # TPA 系统
-    └── admin/           # 管理员工具
+    ├── admin/           # 管理员工具
+    ├── tick/            # SF Tick 系统 (100tick/秒)
+    ├── world/           # 世界管理
+    ├── chat/            # 聊天系统
+    ├── permission/      # 权限系统
+    ├── enchant/         # 附魔注册系统
+    └── item/            # 物品注册系统
 ```
 
 **命名约定**

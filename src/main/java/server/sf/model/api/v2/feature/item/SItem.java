@@ -11,14 +11,56 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
+import server.sf.model.api.v2.SF;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 public abstract class SItem {
 
     private static Plugin plugin;
+    private static final Map<String, org.bukkit.attribute.Attribute> attrCache = new HashMap<>();
 
     public static void init(Plugin p) { plugin = p; }
+
+    public static org.bukkit.attribute.Attribute findAttribute(String name) {
+        if (attrCache.containsKey(name)) return attrCache.get(name);
+        org.bukkit.attribute.Attribute result = null;
+        String matched = null;
+
+        String upper = name.toUpperCase();
+        String core = upper;
+        if (core.startsWith("GENERIC_")) core = core.substring(8);
+        if (core.startsWith("PLAYER_")) core = core.substring(7);
+
+        String[] candidates = {
+                upper,
+                core,
+                "GENERIC_" + core,
+                "PLAYER_" + core
+        };
+
+        for (String candidate : candidates) {
+            try {
+                Field f = org.bukkit.attribute.Attribute.class.getField(candidate);
+                Object val = f.get(null);
+                if (val instanceof org.bukkit.attribute.Attribute a) {
+                    result = a;
+                    matched = candidate;
+                    break;
+                }
+            } catch (Exception ignored) {}
+        }
+        if (plugin != null) {
+            if (matched != null) {
+                SF.sf().info("[Item] Attribute lookup: '" + name + "' -> matched '" + matched + "'");
+            } else {
+                SF.sf().warn("[Item] Attribute lookup FAILED: '" + name + "' (tried: " + String.join(", ", candidates) + ")");
+            }
+        }
+        attrCache.put(name, result);
+        return result;
+    }
 
     public abstract String id();
 
@@ -65,11 +107,11 @@ public abstract class SItem {
     public void applyAttributes(ItemMeta meta, int level) {
         for (ItemAttributeBonus a : attributes()) {
             try {
-                org.bukkit.attribute.Attribute attr = org.bukkit.attribute.Attribute.valueOf(a.attribute.toUpperCase());
+                org.bukkit.attribute.Attribute attr = findAttribute(a.attribute);
+                if (attr == null) continue;
                 meta.addAttributeModifier(attr, new AttributeModifier(
                         modifierUuid(a.name), a.name, a.valueAt(level), a.operation, a.slot));
             } catch (Throwable t) {
-                // ignore
             }
         }
     }
@@ -77,10 +119,10 @@ public abstract class SItem {
     public void clearAttributes(ItemMeta meta) {
         for (ItemAttributeBonus a : attributes()) {
             try {
-                org.bukkit.attribute.Attribute attr = org.bukkit.attribute.Attribute.valueOf(a.attribute.toUpperCase());
+                org.bukkit.attribute.Attribute attr = findAttribute(a.attribute);
+                if (attr == null) continue;
                 meta.removeAttributeModifier(attr);
             } catch (Throwable t) {
-                // ignore
             }
         }
     }
@@ -128,11 +170,11 @@ public abstract class SItem {
             meta.setMaxStackSize(maxStackSize());
             for (ItemAttributeBonus a : attributes()) {
                 try {
-                    org.bukkit.attribute.Attribute attr = org.bukkit.attribute.Attribute.valueOf(a.attribute.toUpperCase());
+                    org.bukkit.attribute.Attribute attr = findAttribute(a.attribute);
+                    if (attr == null) continue;
                     meta.addAttributeModifier(attr, new AttributeModifier(
                             modifierUuid(a.name), a.name, a.baseValue, a.operation, a.slot));
                 } catch (Throwable t) {
-                    // ignore
                 }
             }
             PersistentDataContainer pdc = meta.getPersistentDataContainer();

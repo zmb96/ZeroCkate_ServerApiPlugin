@@ -1,6 +1,10 @@
 package server.sf.model.api.v2.feature.enchant;
 
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import server.sf.model.api.v2.SF;
 
 import java.util.*;
@@ -88,5 +92,41 @@ public class EnchantManager {
             if (!e.id().equals(enchant.id()) && enchant.conflictsWith(e)) list.add(e);
         }
         return list;
+    }
+
+    public ItemStack createBook(String id, int level) {
+        SEnchantment e = get(id);
+        return e == null ? null : createBook(e, level);
+    }
+
+    public ItemStack createBook(SEnchantment enchant, int level) {
+        ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
+        ItemMeta meta = book.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.LIGHT_PURPLE + "附魔书");
+            enchant.applyLore(meta, level);
+            book.setItemMeta(meta);
+        }
+        enchant.setLevel(book, level);
+        return book;
+    }
+
+    public ItemStack createBook(String id) {
+        SEnchantment e = get(id);
+        return e == null ? null : createBook(e, e.maxLevel());
+    }
+
+    public void giveBook(Player player, String id, int level) {
+        ItemStack book = createBook(id, level);
+        if (book == null) return;
+        player.getInventory().addItem(book).forEach((idx, leftover) ->
+                player.getWorld().dropItemNaturally(player.getLocation(), leftover));
+        SF.sf().msg(player, "§a获得附魔书: " + get(id).displayName() + " " + SEnchantment.roman(level));
+    }
+
+    public void giveBook(Player player, String id) {
+        SEnchantment e = get(id);
+        if (e == null) return;
+        giveBook(player, id, e.maxLevel());
     }
 }

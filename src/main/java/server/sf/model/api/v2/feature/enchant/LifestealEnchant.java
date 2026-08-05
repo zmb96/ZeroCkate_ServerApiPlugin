@@ -45,7 +45,7 @@ public class LifestealEnchant extends SEnchantment {
         double healPercent = 0.05 + 0.05 * ctx.level();
         double heal = ctx.damage() * healPercent;
         double newHealth = Math.min(ctx.player().getHealth() + heal,
-                ctx.player().getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue());
+                ctx.player().getAttribute(findAttribute("GENERIC_MAX_HEALTH")).getValue());
         ctx.player().setHealth(newHealth);
         ctx.player().getWorld().spawnParticle(Particle.HEART,
                 ctx.player().getLocation().add(0, 1, 0), 5, 0.3, 0.3, 0.3, 0.01);

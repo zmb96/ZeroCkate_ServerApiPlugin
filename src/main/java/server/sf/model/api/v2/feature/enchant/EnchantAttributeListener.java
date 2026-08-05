@@ -20,16 +20,56 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.scheduler.BukkitRunnable;
 import server.sf.model.api.v2.SF;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 public class EnchantAttributeListener implements Listener {
 
     private final EnchantManager manager;
     private final Map<UUID, Set<String>> activeMods = new HashMap<>();
+    private final Map<String, org.bukkit.attribute.Attribute> attrCache = new HashMap<>();
     private BukkitRunnable tickTask;
 
     public EnchantAttributeListener(EnchantManager manager) {
         this.manager = manager;
+    }
+
+    private org.bukkit.attribute.Attribute findAttribute(String name) {
+        if (attrCache.containsKey(name)) return attrCache.get(name);
+        org.bukkit.attribute.Attribute result = null;
+        String matched = null;
+
+        String upper = name.toUpperCase();
+        String core = upper;
+        if (core.startsWith("GENERIC_")) core = core.substring(8);
+        if (core.startsWith("PLAYER_")) core = core.substring(7);
+
+        String[] candidates = {
+                upper,
+                core,
+                "GENERIC_" + core,
+                "PLAYER_" + core
+        };
+
+        for (String candidate : candidates) {
+            try {
+                Field f = org.bukkit.attribute.Attribute.class.getField(candidate);
+                Object val = f.get(null);
+                if (val instanceof org.bukkit.attribute.Attribute a) {
+                    result = a;
+                    matched = candidate;
+                    break;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (matched != null) {
+            SF.sf().info("[Enchant] Attribute lookup: '" + name + "' -> matched '" + matched + "'");
+        } else {
+            SF.sf().warn("[Enchant] Attribute lookup FAILED: '" + name + "' (tried: " + String.join(", ", candidates) + ")");
+        }
+        attrCache.put(name, result);
+        return result;
     }
 
     public void startTick(SF sf, long period) {
@@ -91,7 +131,11 @@ public class EnchantAttributeListener implements Listener {
     private void applyAttributes(Player p, SEnchantment enchant, int level) {
         for (SEnchantment.AttributeBonus a : enchant.attributes()) {
             try {
-                org.bukkit.attribute.Attribute attr = org.bukkit.attribute.Attribute.valueOf(a.attribute.toUpperCase());
+                org.bukkit.attribute.Attribute attr = findAttribute(a.attribute);
+                if (attr == null) {
+                    SF.sf().error("[Enchant] attribute not found: " + a.attribute);
+                    continue;
+                }
                 AttributeInstance inst = p.getAttribute(attr);
                 if (inst == null) continue;
                 UUID modId = modUuid(enchant.id());
@@ -107,7 +151,8 @@ public class EnchantAttributeListener implements Listener {
     private void removeAllMods(Player p, SEnchantment enchant) {
         for (SEnchantment.AttributeBonus a : enchant.attributes()) {
             try {
-                org.bukkit.attribute.Attribute attr = org.bukkit.attribute.Attribute.valueOf(a.attribute.toUpperCase());
+                org.bukkit.attribute.Attribute attr = findAttribute(a.attribute);
+                if (attr == null) continue;
                 AttributeInstance inst = p.getAttribute(attr);
                 if (inst == null) continue;
                 AttributeModifier m = inst.getModifier(modUuid(enchant.id()));

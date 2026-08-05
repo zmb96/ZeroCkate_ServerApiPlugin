@@ -7,6 +7,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import server.sf.model.api.v2.SF;
+import server.sf.model.api.v2.feature.enchant.SEnchantment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,7 @@ public final class HealCommand implements CommandExecutor, TabCompleter {
             explicit = false;
         }
 
-        target.setHealth(target.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue());
+        target.setHealth(target.getAttribute(SEnchantment.findAttribute("GENERIC_MAX_HEALTH")).getValue());
         target.setFireTicks(0);
         target.setRemainingAir(target.getMaximumAir());
         for (org.bukkit.potion.PotionEffect eff : target.getActivePotionEffects()) {

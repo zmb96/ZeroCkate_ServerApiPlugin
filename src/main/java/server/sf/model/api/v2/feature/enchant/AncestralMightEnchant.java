@@ -78,18 +78,13 @@ public class AncestralMightEnchant extends SEnchantment {
     // 受伤时触发 —— Lv2+ 有概率回血并播放不死图腾粒子特效
     @Override
     public void onDamaged(EnchantContext ctx) {
-        // Lv1 不触发，Lv2 起才有特殊效果
         if (ctx.level() < 2) return;
-        // 5% × 等级 的触发概率（Lv2=10%, Lv3=15%）
         if (Math.random() < 0.05 * ctx.level()) {
             Player p = ctx.player();
-            // 回复 1 点生命（不超过最大生命值上限）
             p.setHealth(Math.min(p.getHealth() + 2.0,
-                    p.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue()));
-            // 播放不死图腾粒子效果（绿色光圈）
+                    p.getAttribute(findAttribute("GENERIC_MAX_HEALTH")).getValue()));
             p.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,
                     p.getLocation().add(0, 1, 0), 15, 0.5, 0.5, 0.5, 0.1);
-            // 播放图腾使用音效（音量0.5，音调1.5）
             p.playSound(p.getLocation(), Sound.ITEM_TOTEM_USE, 0.5f, 1.5f);
         }
     }

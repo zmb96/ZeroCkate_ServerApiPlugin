@@ -1,6 +1,7 @@
 package server.sf.model.api.v2.feature.enchant;
 
 import org.bukkit.NamespacedKey;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -8,15 +9,50 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
+import server.sf.model.api.v2.SF;
 
+import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class SEnchantment {
 
     private static Plugin plugin;
+    private static final Map<String, Attribute> attrCache = new ConcurrentHashMap<>();
     private int levelCache;
 
     public static void init(Plugin p) { plugin = p; }
+
+    public static Attribute findAttribute(String name) {
+        if (attrCache.containsKey(name)) return attrCache.get(name);
+
+        String upper = name.toUpperCase();
+        String core = upper;
+        if (core.startsWith("GENERIC_")) core = core.substring(8);
+        if (core.startsWith("PLAYER_")) core = core.substring(7);
+
+        String[] candidates = {upper, core, "GENERIC_" + core, "PLAYER_" + core};
+
+        Attribute result = null;
+        for (String candidate : candidates) {
+            try {
+                Field f = Attribute.class.getField(candidate);
+                Object val = f.get(null);
+                if (val instanceof Attribute a) {
+                    result = a;
+                    break;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (result != null && plugin != null) {
+            SF.sf().info("[Enchant] Attribute resolved: " + name + " -> " + result.name());
+        } else if (plugin != null) {
+            SF.sf().warn("[Enchant] Attribute not found: " + name);
+        }
+        attrCache.put(name, result);
+        return result;
+    }
 
     public abstract String id();
 

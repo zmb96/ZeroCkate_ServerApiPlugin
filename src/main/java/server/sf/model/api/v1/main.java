@@ -15,6 +15,12 @@ import server.sf.model.api.v2.feature.enchant.SFEnchantCommand;
 import server.sf.model.api.v2.feature.item.ItemManager;
 import server.sf.model.api.v2.feature.item.MagicScepterItem;
 import server.sf.model.api.v2.feature.item.SFItemCommand;
+import server.sf.model.api.v2.feature.chat.ChatCommand;
+import server.sf.model.api.v2.feature.chat.ChatManager;
+import server.sf.model.api.v2.feature.permission.PermissionCommand;
+import server.sf.model.api.v2.feature.permission.PermissionManager;
+import server.sf.model.api.v2.feature.world.WorldCommand;
+import server.sf.model.api.v2.feature.world.WorldManager;
 import server.sf.model.api.v2.feature.teleport.*;
 import server.sf.model.api.v2.feature.tpa.TpaCommands;
 import server.sf.model.api.v2.feature.tpa.TpaManager;
@@ -90,6 +96,18 @@ public final class main extends JavaPlugin {
         ItemManager itemManager = SF.sf().item();
         itemManager.register(new MagicScepterItem());
         SF.sf().regCommand("sfitem", new SFItemCommand(itemManager));
+
+        ChatManager chatManager = SF.sf().chat();
+        SF.sf().regCommand("sfchat", new ChatCommand(chatManager));
+
+        WorldManager worldManager = SF.sf().world();
+        SF.sf().regCommand("sfworld", new WorldCommand(worldManager));
+
+        PermissionManager permManager = SF.sf().permission();
+        SF.sf().regCommand("sfperm", new PermissionCommand(permManager));
+
+        SF.sf().reach();
+        SF.sf().regCommand("sfreach", new server.sf.model.api.v2.feature.main.ReachCommand(SF.sf().reach()));
 
         SF.sf().info("插件已加载");
         SF.sf().info("Economy ready: " + SF.sf().eco().ready() + " (Essentials=" + SF.sf().eco().hasEssentials() + ", Vault=" + SF.sf().eco().hasVault() + ")");

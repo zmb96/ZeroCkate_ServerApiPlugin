@@ -94,7 +94,8 @@ public class ItemListener implements Listener {
     private void applyAttributes(Player p, SItem item) {
         for (SItem.ItemAttributeBonus a : item.attributes()) {
             try {
-                org.bukkit.attribute.Attribute attr = org.bukkit.attribute.Attribute.valueOf(a.attribute.toUpperCase());
+                org.bukkit.attribute.Attribute attr = SItem.findAttribute(a.attribute);
+                if (attr == null) continue;
                 org.bukkit.attribute.AttributeInstance inst = p.getAttribute(attr);
                 if (inst == null) continue;
                 UUID modId = UUID.nameUUIDFromBytes(("sf_item_" + item.id() + "_" + a.name).getBytes());
@@ -110,7 +111,8 @@ public class ItemListener implements Listener {
     private void removeAttributes(Player p, SItem item) {
         for (SItem.ItemAttributeBonus a : item.attributes()) {
             try {
-                org.bukkit.attribute.Attribute attr = org.bukkit.attribute.Attribute.valueOf(a.attribute.toUpperCase());
+                org.bukkit.attribute.Attribute attr = SItem.findAttribute(a.attribute);
+                if (attr == null) continue;
                 org.bukkit.attribute.AttributeInstance inst = p.getAttribute(attr);
                 if (inst == null) continue;
                 UUID modId = UUID.nameUUIDFromBytes(("sf_item_" + item.id() + "_" + a.name).getBytes());

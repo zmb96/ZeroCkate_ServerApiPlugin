@@ -17,6 +17,11 @@ import server.sf.model.api.v2.feature.item.ItemListener;
 import server.sf.model.api.v2.feature.item.ItemManager;
 import server.sf.model.api.v2.feature.item.SItem;
 import server.sf.model.api.v2.feature.teleport.TeleportManager;
+import server.sf.model.api.v2.feature.tick.TickManager;
+import server.sf.model.api.v2.feature.chat.ChatManager;
+import server.sf.model.api.v2.feature.world.WorldManager;
+import server.sf.model.api.v2.feature.permission.PermissionManager;
+import server.sf.model.api.v2.feature.main.ReachManager;
 import server.sf.model.api.v2.main.SFCommandOps;
 import server.sf.model.api.v2.main.SFLogger;
 import server.sf.model.api.v2.main.SFPlayerOps;
@@ -37,11 +42,16 @@ public final class SF implements SFApi {
     private final SFPlayerOps players;
     private final SFCommandOps commands;
     private final SFServerOps serverOps;
+    private final TickManager tickManager;
     private TeleportManager teleportManager;
     private EnchantManager enchantManager;
     private EnchantAttributeListener enchantAttrListener;
     private ItemManager itemManager;
     private ItemListener itemListener;
+    private ChatManager chatManager;
+    private WorldManager worldManager;
+    private PermissionManager permissionManager;
+    private ReachManager reachManager;
 
     private SF(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -52,6 +62,8 @@ public final class SF implements SFApi {
         this.players = new SFPlayerOps();
         this.commands = new SFCommandOps(plugin);
         this.serverOps = new SFServerOps();
+        this.tickManager = new TickManager(plugin);
+        this.tickManager.start();
     }
 
     public static void init(JavaPlugin plugin) {
@@ -60,6 +72,7 @@ public final class SF implements SFApi {
         }
         instance = new SF(plugin);
         plugin.getServer().getServicesManager().register(SFApi.class, instance, plugin, org.bukkit.plugin.ServicePriority.Normal);
+        plugin.getServer().getServicesManager().register(SF.class, instance, plugin, org.bukkit.plugin.ServicePriority.Normal);
     }
 
     public static void shutdown() {
@@ -69,6 +82,7 @@ public final class SF implements SFApi {
             if (instance.itemListener != null) instance.itemListener.shutdown();
             if (instance.itemManager != null) instance.itemManager.unregisterAll();
             instance.events.unregisterAll();
+            instance.tickManager.shutdown();
             instance.plugin.getServer().getServicesManager().unregister(instance);
         }
         instance = null;
@@ -96,6 +110,8 @@ public final class SF implements SFApi {
             enchantAttrListener = new EnchantAttributeListener(enchantManager);
             regEvent(new server.sf.model.api.v2.feature.enchant.EnchantAnvilListener(enchantManager), plugin);
             regEvent(enchantAttrListener, plugin);
+            regEvent(new server.sf.model.api.v2.feature.enchant.EnchantChestListener(enchantManager), plugin);
+            regEvent(new server.sf.model.api.v2.feature.enchant.EnchantTableListener(enchantManager), plugin);
             enchantAttrListener.startTick(this, 40L);
             SF.sf().info("[Enchant] System initialized");
         }
@@ -108,9 +124,45 @@ public final class SF implements SFApi {
             itemManager = new ItemManager();
             itemListener = new ItemListener(itemManager);
             regEvent(itemListener, plugin);
+            regEvent(new server.sf.model.api.v2.feature.item.ItemChestListener(itemManager), plugin);
             SF.sf().info("[Item] System initialized");
         }
         return itemManager;
+    }
+
+    public ChatManager chat() {
+        if (chatManager == null) {
+            chatManager = new ChatManager(tickManager);
+            regEvent(new server.sf.model.api.v2.feature.chat.ChatListener(chatManager), plugin);
+            SF.sf().info("[Chat] System initialized");
+        }
+        return chatManager;
+    }
+
+    public WorldManager world() {
+        if (worldManager == null) {
+            worldManager = new WorldManager();
+            SF.sf().info("[World] System initialized");
+        }
+        return worldManager;
+    }
+
+    public PermissionManager permission() {
+        if (permissionManager == null) {
+            permissionManager = new PermissionManager();
+            permissionManager.initDefaults();
+            regEvent(new server.sf.model.api.v2.feature.permission.PermissionListener(permissionManager), plugin);
+            SF.sf().info("[Permission] System initialized");
+        }
+        return permissionManager;
+    }
+
+    public ReachManager reach() {
+        if (reachManager == null) {
+            reachManager = new ReachManager();
+            SF.sf().info("[Reach] System initialized");
+        }
+        return reachManager;
     }
 
     @Override
@@ -149,6 +201,11 @@ public final class SF implements SFApi {
 
     public SFCommandOps commands() {
         return commands;
+    }
+
+    @Override
+    public TickManager tick() {
+        return tickManager;
     }
 
     public JavaPlugin plugin() {

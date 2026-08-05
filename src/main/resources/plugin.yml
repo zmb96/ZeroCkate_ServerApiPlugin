@@ -145,6 +145,24 @@ commands:
     usage: /sfitem <list|give|info|hand|reload|help>
     aliases: [sfi]
     permission: sf.admin.item
+  sfchat:
+    description: SF 聊天系统
+    usage: /sfchat <channel|mute|unmute|muteinfo|block|unblock|blocklist|clear|help>
+    aliases: [sfc]
+  sfworld:
+    description: SF 世界管理
+    usage: /sfworld <time|day|night|weather|difficulty|pvp|border|mob|fire|preset|info|list|help>
+    aliases: [sfw]
+    permission: sf.admin.world
+  sfperm:
+    description: SF 权限系统
+    usage: /sfperm <group|set|addperm|rmperm|info|list|help>
+    aliases: [sfp]
+    permission: sf.admin.permission
+  sfreach:
+    description: SF 交互距离
+    usage: /sfreach <info|set|add|reset|help>
+    aliases: [sfre]
 
 permissions:
   servermanagement.use:
@@ -203,4 +221,16 @@ permissions:
     default: op
   sf.admin.speed:
     description: 设置速度
+    default: op
+  sf.admin.world:
+    description: 世界管理
+    default: op
+  sf.admin.chat:
+    description: 聊天管理
+    default: op
+  sf.admin.permission:
+    description: 权限管理
+    default: op
+  sf.admin.reach:
+    description: 交互距离管理
     default: op

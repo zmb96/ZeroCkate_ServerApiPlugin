@@ -8,6 +8,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import server.sf.model.api.v2.economy.SFEconomy;
 import server.sf.model.api.v2.event.SFEvents;
+import server.sf.model.api.v2.feature.chat.ChatManager;
+import server.sf.model.api.v2.feature.permission.PermissionManager;
+import server.sf.model.api.v2.feature.tick.TickManager;
+import server.sf.model.api.v2.feature.world.WorldManager;
 import server.sf.model.api.v2.main.SFLogger;
 import server.sf.model.api.v2.main.SFPlayerOps;
 import server.sf.model.api.v2.main.SFScheduler;
@@ -28,6 +32,14 @@ public interface SFApi {
     SFPlayerOps players();
 
     SFServerOps server();
+
+    TickManager tick();
+
+    ChatManager chat();
+
+    WorldManager world();
+
+    PermissionManager permission();
 
     void info(String msg);
 
