@@ -4,7 +4,7 @@
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Bukkit](https://img.shields.io/badge/Bukkit-1.21.5-green)
-![License](https://img.shields.io/badge/License-MIT-blue)
+![License](https://img.shields.io/badge/License-GPLv3-blue)
 
 ## 目录
 
@@ -2589,7 +2589,7 @@ A：在 [GitHub Issues](https://github.com/zmb96/ZeroCkate_ServerManagementPlugi
 
 **Q: 可以商用吗**
 
-A：SF 使用 MIT 协议，允许商用、修改、分发，但需保留版权声明。详见 [LICENSE](LICENSE)。
+A：SF 使用 GPLv3 协议，允许商用、修改、分发，但衍生作品必须同样以 GPLv3 开源。详见 [LICENSE](LICENSE)。
 
 ---
 
@@ -2881,4 +2881,4 @@ server.sf.model.api.v2/
 
 ## 📄 License
 
-MIT License - 详见 [LICENSE](LICENSE)
+GNU General Public License v3.0 - 详见 [LICENSE](LICENSE)
