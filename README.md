@@ -12,9 +12,6 @@
 - [📦 安装](#-安装)
 - [🚀 快速开始](#-快速开始)
 - [🎮 命令参考](#-命令参考)
-    - [传送命令](#传送命令)
-    - [TPA 命令](#tpa-命令)
-    - [管理员命令](#管理员命令)
     - [系统命令](#系统命令)
     - [世界管理命令](#世界管理命令)
     - [聊天系统命令](#聊天系统命令)
@@ -39,11 +36,10 @@
 ## ✨ 特性
 
 - 🚀 **极简 API**：一行代码完成日志、经济、传送、调度等操作
-- 🎯 **40+ 内置命令**：传送、家、传送点、TPA、管理员工具、世界管理、聊天、权限一应俱全
+- 🎯 **20+ 内置命令**：世界管理、聊天、权限、附魔、物品一应俱全
 - 💰 **双后端经济**：自动检测 EssentialsX / Vault，无需手动配置
 - 🗄️ **持久化存储**：内置 SQLite / MySQL 切换，零配置开箱即用
 - 🔔 **完整事件系统**：120+ Bukkit 事件分类封装，链式调用
-- 🛡️ **管理员工具**：无敌、隐身、飞行、治疗、清包等 12 个常用命令
 - ⚡ **SF Tick 系统**：独立线程 100tick/秒，不干扰原版 20tick/秒
 - 🌍 **世界管理**：时间/天气/难度/PVP/世界边界/生物生成/火焰蔓延/预设
 - 💬 **聊天系统**：多频道、禁言、脏话过滤、聊天格式化
@@ -51,7 +47,7 @@
 - 🔮 **附魔注册系统**：继承 `SEnchantment` 自定义附魔，铁砧附魔支持
 - 🎒 **物品注册系统**：继承 `SItem` 自定义物品，属性加成、交互事件
 - 🔌 **第三方接入**：通过 Bukkit ServicesManager 暴露 `SFApi` 接口
-- ⚡ **异步安全**：经济操作自动回滚、传送防移动取消
+- ⚡ **异步安全**：经济操作自动回滚
 
 ---
 
@@ -167,120 +163,35 @@ CREATE DATABASE minecraft CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 本指南将带你在 5 分钟内完成 SF 插件的基础配置。
 
-### 1. 设置出生点
+### 1. 安装插件
 
-作为 OP，站在你想要的位置执行：
+将 `ZeroCkate_ServerApiPlugin.jar` 放入服务器的 `plugins/` 目录，重启服务器。
 
+### 2. 验证加载
+
+控制台应显示：
 ```
-/setspawn
-```
-
-之后玩家可以用 `/spawn` 回到这个位置。
-
-### 2. 创建公共传送点
-
-站在你想让玩家传送到的位置：
-
-```
-/setwarp shop
-/setwarp pvp
-/setwarp spawn
+[SF] 插件已加载
+[SF] Economy ready: true (Essentials=..., Vault=...)
 ```
 
-玩家输入 `/warp shop` 即可传送到商店。查看所有传送点：`/warps`
-
-### 3. 设置个人家
-
-玩家可以设置自己的家：
+### 3. 基本命令
 
 ```
-/sethome home       # 设置名为 "home" 的家
-/sethome farm       # 设置名为 "farm" 的家
-/home home          # 传送到 "home"
-/homes              # 查看所有家
-/delhome farm       # 删除 "farm"
+/servermanagement reload    # 重载配置
+/sfenchant list             # 查看所有附魔
+/sfitem list                # 查看所有物品
+/sfworld day                # 设为白天
+/sfchat help                # 聊天系统帮助
+/sfperm list                # 查看权限组
+/sfreach info               # 查看交互距离
 ```
 
-### 4. TPA 请求传送
-
-玩家之间互相传送：
-
-```
-玩家A: /tpa 玩家B      # 请求传送到 玩家B
-玩家B: /tpaccept       # 接受
-玩家B: /tpdeny         # 或拒绝
-
-玩家A: /tpahere 玩家B  # 邀请 玩家B 过来
-玩家B: /tpaccept       # 接受
-```
-
-请求默认 60 秒超时，可在 `config.yml` 修改。
-
-### 5. 使用管理员工具
-
-常用管理员命令：
-
-```
-/gm 1                # 切换到创造模式
-/gm 0                # 切换到生存模式
-/fly                 # 切换飞行
-/god                 # 切换无敌
-/vanish              # 切换隐身
-/heal                # 治疗自己
-/feed                # 喂饱自己
-/clear 玩家名         # 清空某玩家的背包
-/speed 5             # 设置速度为 5
-```
-
-所有管理员命令都支持指定其他玩家：
-
-```
-/heal 玩家名
-/fly 玩家名
-/gm 1 玩家名
-```
-
-### 6. 返回上次位置
-
-每次传送前都会自动记录位置，可以用 `/back` 返回：
-
-```
-/spawn               # 传送到出生点
-/back                # 返回刚才的位置
-```
-
-### 7. 配置冷却和延迟
-
-编辑 `config.yml`：
-
-```yaml
-teleport:
-  cooldown:
-    spawn: 5         # /spawn 冷却 5 秒
-    home: 5
-    warp: 5
-    back: 10
-    tpa: 10
-  delay:
-    spawn: 3         # /spawn 延迟 3 秒（期间移动会取消）
-    home: 3
-  tpa:
-    timeout: 60      # TPA 请求 60 秒超时
-```
-
-重载配置：`/servermanagement reload`
-
-### 8. 权限设置
+### 4. 权限设置
 
 使用 LuckPerms 或类似插件分配权限：
 
 ```
-# 给所有玩家基础传送权限（默认就有）
-lp group default permission set sf.teleport.bypass false
-
-# 给 VIP 跳过冷却权限
-lp group vip permission set sf.teleport.bypass true
-
 # 给管理员所有权限
 lp group admin permission set sf.admin.* true
 ```
@@ -288,229 +199,6 @@ lp group admin permission set sf.admin.* true
 ---
 
 ## 🎮 命令参考
-
-### 传送命令
-
-#### `/spawn` - 传送到出生点
-
-| 用法 | 说明 |
-|------|------|
-| `/spawn` | 传送到当前世界的出生点 |
-| `/spawn set` | 设置当前世界的出生点（需要 `sf.spawn.set`） |
-
-**别名**：`spawnpoint` ｜ **权限**：`sf.spawn.set`（仅设置需要）
-
-#### `/setspawn` - 设置出生点
-
-| 用法 | 说明 |
-|------|------|
-| `/setspawn` | 将当前位置设为当前世界的出生点 |
-
-**权限**：`sf.spawn.set`
-
-#### `/home` - 传送到家
-
-| 用法 | 说明 |
-|------|------|
-| `/home` | 传送到名为 `default` 的家 |
-| `/home <名称>` | 传送到指定名称的家 |
-
-#### `/sethome` - 设置家
-
-| 用法 | 说明 |
-|------|------|
-| `/sethome` | 设置名为 `default` 的家 |
-| `/sethome <名称>` | 设置指定名称的家 |
-
-#### `/delhome` - 删除家
-
-| 用法 | 说明 |
-|------|------|
-| `/delhome <名称>` | 删除指定名称的家 |
-
-#### `/homes` - 列出所有家
-
-| 用法 | 说明 |
-|------|------|
-| `/homes` | 列出你所有的家 |
-
-#### `/warp` - 传送到公共传送点
-
-| 用法 | 说明 |
-|------|------|
-| `/warp` | 列出所有传送点 |
-| `/warp <名称>` | 传送到指定传送点 |
-
-#### `/setwarp` - 设置公共传送点
-
-| 用法 | 说明 |
-|------|------|
-| `/setwarp <名称>` | 在当前位置创建公共传送点 |
-
-**权限**：`sf.warp.set`
-
-#### `/delwarp` - 删除公共传送点
-
-| 用法 | 说明 |
-|------|------|
-| `/delwarp <名称>` | 删除指定传送点 |
-
-**权限**：`sf.warp.set`
-
-#### `/warps` - 列出所有传送点
-
-| 用法 | 说明 |
-|------|------|
-| `/warps` | 列出服务器所有公共传送点 |
-
-#### `/back` - 返回上次位置
-
-| 用法 | 说明 |
-|------|------|
-| `/back` | 返回上次传送前的位置 |
-
-**别名**：`return`
-
-> 💡 每次传送都会记录前位置。
-
-#### `/tp` - 管理员传送
-
-| 用法 | 说明 |
-|------|------|
-| `/tp <玩家>` | 传送到指定玩家 |
-| `/tp <玩家1> <玩家2>` | 将玩家1传送到玩家2 |
-| `/tp <x> <y> <z>` | 传送到指定坐标 |
-
-**权限**：`sf.admin.tp`
-
-#### `/tphere` - 召唤玩家
-
-| 用法 | 说明 |
-|------|------|
-| `/tphere <玩家>` | 将指定玩家传送到你身边 |
-
-**权限**：`sf.admin.tp`
-
-### TPA 命令
-
-| 命令 | 用法 | 说明 |
-|------|------|------|
-| `/tpa` | `/tpa <玩家>` | 请求传送到指定玩家身边 |
-| `/tpahere` | `/tpahere <玩家>` | 邀请指定玩家传送到你身边 |
-| `/tpaccept` | `/tpaccept` | 接受当前待处理的传送请求 |
-| `/tpdeny` | `/tpdeny` | 拒绝当前待处理的传送请求 |
-| `/tpcancel` | `/tpcancel` | 取消你发起的传送请求 |
-
-### 管理员命令
-
-#### `/gm` - 切换游戏模式
-
-| 用法 | 说明 |
-|------|------|
-| `/gm <模式>` | 切换自己的游戏模式 |
-| `/gm <模式> <玩家>` | 切换指定玩家的游戏模式 |
-
-**别名**：`gamemode` ｜ **权限**：`sf.admin.gamemode`
-
-**模式参数**：
-- `0` / `s` / `survival` - 生存
-- `1` / `c` / `creative` - 创造
-- `2` / `a` / `adventure` - 冒险
-- `3` / `sp` / `spectator` - 旁观
-
-#### `/fly` - 切换飞行
-
-| 用法 | 说明 |
-|------|------|
-| `/fly` | 切换自己的飞行状态 |
-| `/fly <玩家>` | 切换指定玩家的飞行状态 |
-
-**权限**：`sf.admin.fly`
-
-#### `/heal` - 治疗
-
-| 用法 | 说明 |
-|------|------|
-| `/heal` | 治疗自己（恢复生命值、清除药水效果、熄灭） |
-| `/heal <玩家>` | 治疗指定玩家 |
-
-**权限**：`sf.admin.heal`
-
-#### `/feed` - 喂饱
-
-| 用法 | 说明 |
-|------|------|
-| `/feed` | 喂饱自己（饥饿值+饱和度满） |
-| `/feed <玩家>` | 喂饱指定玩家 |
-
-**权限**：`sf.admin.feed`
-
-#### `/god` - 无敌模式
-
-| 用法 | 说明 |
-|------|------|
-| `/god` | 切换自己的无敌状态 |
-| `/god <玩家>` | 切换指定玩家的无敌状态 |
-
-**权限**：`sf.admin.god`
-
-> 💡 无敌状态下不会受到任何伤害。状态在重登后保持。
-
-#### `/vanish` - 隐身
-
-| 用法 | 说明 |
-|------|------|
-| `/vanish` | 切换自己的隐身状态 |
-| `/vanish <玩家>` | 切换指定玩家的隐身状态 |
-
-**权限**：`sf.admin.vanish`
-
-> 💡 隐身后其他玩家看不到你，但拥有 `sf.admin.seevanished` 权限的玩家仍可见。状态在重登后保持。
-
-#### `/ec` - 打开末影箱
-
-| 用法 | 说明 |
-|------|------|
-| `/ec` | 打开自己的末影箱 |
-| `/ec <玩家>` | 打开指定玩家的末影箱 |
-
-**别名**：`enderchest` ｜ **权限**：`sf.admin.enderchest`
-
-#### `/wb` - 打开工作台
-
-| 用法 | 说明 |
-|------|------|
-| `/wb` | 打开一个 3x3 工作台界面 |
-
-**别名**：`workbench`, `craft` ｜ **权限**：`sf.admin.workbench`
-
-#### `/clear` - 清空背包
-
-| 用法 | 说明 |
-|------|------|
-| `/clear` | 清空自己的背包和末影箱 |
-| `/clear <玩家>` | 清空指定玩家的背包和末影箱 |
-
-**别名**：`clearinv` ｜ **权限**：`sf.admin.clear`
-
-#### `/speed` - 设置速度
-
-| 用法 | 说明 |
-|------|------|
-| `/speed <1-10>` | 设置自己的速度 |
-| `/speed <1-10> <玩家>` | 设置指定玩家的速度 |
-
-**权限**：`sf.admin.speed`
-
-> 💡 如果在飞行中，设置飞行速度；否则设置行走速度。
-
-#### `/suicide` - 自杀
-
-| 用法 | 说明 |
-|------|------|
-| `/suicide` | 立即杀死自己 |
-
-**别名**：`killme`
 
 ### 系统命令
 
@@ -1159,32 +847,10 @@ new ItemAttributeBonus(
 |------|------|
 | `servermanagement.use` | 使用 `/servermanagement` 命令 |
 
-### 传送权限
-
-| 权限 | 说明 | 默认 |
-|------|------|------|
-| `sf.spawn.set` | 设置出生点 `/setspawn` | OP |
-| `sf.warp.set` | 设置/删除公共传送点 | OP |
-| `sf.teleport.bypass` | 跳过传送冷却 | OP |
-| `sf.admin.tp` | 管理员传送 `/tp` `/tphere` | OP |
-
-> 💡 普通的 `/spawn` `/home` `/warp` `/tpa` 等命令**所有玩家默认可用**。
-
 ### 管理员权限
 
 | 权限 | 说明 | 默认 |
 |------|------|------|
-| `sf.admin.gamemode` | 切换游戏模式 `/gm` | OP |
-| `sf.admin.fly` | 切换飞行 `/fly` | OP |
-| `sf.admin.heal` | 治疗 `/heal` | OP |
-| `sf.admin.feed` | 喂饱 `/feed` | OP |
-| `sf.admin.god` | 无敌模式 `/god` | OP |
-| `sf.admin.vanish` | 隐身 `/vanish` | OP |
-| `sf.admin.seevanished` | 看到隐身玩家 | OP |
-| `sf.admin.enderchest` | 打开末影箱 `/ec` | OP |
-| `sf.admin.workbench` | 打开工作台 `/wb` | OP |
-| `sf.admin.clear` | 清空背包 `/clear` | OP |
-| `sf.admin.speed` | 设置速度 `/speed` | OP |
 | `sf.admin.world` | 世界管理 `/sfworld` | OP |
 | `sf.admin.chat` | 聊天管理 `/sfchat` | OP |
 | `sf.admin.permission` | 权限管理 `/sfperm` | OP |
@@ -1204,28 +870,14 @@ new ItemAttributeBonus(
 lp group default permission set servermanagement.use true
 ```
 
-**VIP 组**：
-```bash
-lp group vip permission set sf.teleport.bypass true
-```
-
 **管理员组**：
 ```bash
 # 方法 1: 逐个赋予
-lp group admin permission set sf.spawn.set true
-lp group admin permission set sf.warp.set true
-lp group admin permission set sf.admin.tp true
-lp group admin permission set sf.admin.gamemode true
-lp group admin permission set sf.admin.fly true
-lp group admin permission set sf.admin.heal true
-lp group admin permission set sf.admin.feed true
-lp group admin permission set sf.admin.god true
-lp group admin permission set sf.admin.vanish true
-lp group admin permission set sf.admin.seevanished true
-lp group admin permission set sf.admin.enderchest true
-lp group admin permission set sf.admin.workbench true
-lp group admin permission set sf.admin.clear true
-lp group admin permission set sf.admin.speed true
+lp group admin permission set sf.admin.world true
+lp group admin permission set sf.admin.chat true
+lp group admin permission set sf.admin.permission true
+lp group admin permission set sf.admin.enchant true
+lp group admin permission set sf.admin.item true
 
 # 方法 2: 使用通配符（如果你的权限插件支持）
 lp group admin permission set sf.admin.* true
@@ -1240,9 +892,6 @@ SF 支持以下通配符（需权限插件支持，如 LuckPerms）：
 |--------|------|
 | `sf.admin.*` | 所有 `sf.admin.xxx` 权限 |
 | `sf.*` | 所有 `sf.xxx` 权限 |
-| `sf.spawn.*` | 出生点相关权限 |
-| `sf.warp.*` | 传送点相关权限 |
-| `sf.teleport.*` | 传送相关权限 |
 
 ---
 

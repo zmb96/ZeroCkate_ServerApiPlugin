@@ -4,21 +4,50 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>server.sf</groupId>
-    <artifactId>zerockate_sfserverplugin</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <!-- ===== 修改1：groupId 改为 io.github.你的GitHub用户名 ===== -->
+    <groupId>io.github.zmb96</groupId>
+    <artifactId>ZeroCkate_ServerApiPlugin</artifactId>
+    <!-- ===== 修改2：去掉 -SNAPSHOT ===== -->
+    <version>2.0.0</version>
     <packaging>jar</packaging>
 
-    <name>zerockate_sfserverplugin</name>
+    <name>ZeroCkate ServerApi Plugin</name>
+    <description>A Minecraft server plugin providing server-side API</description>
+    <url>https://github.com/zmb96/ZeroCkate_ServerApiPlugin</url>
 
     <properties>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <!-- ===== 新增1：许可证信息（必填） ===== -->
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
+    <!-- ===== 新增2：开发者信息（必填） ===== -->
+    <developers>
+        <developer>
+            <id>zmb96</id>
+            <name>zmb96</name>
+            <email>694018094@qq.com</email>
+        </developer>
+    </developers>
+
+    <!-- ===== 新增3：源码管理地址（必填） ===== -->
+    <scm>
+        <connection>scm:git:git://github.com/zmb96/ZeroCkate_ServerApiPlugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/zmb96/ZeroCkate_ServerApiPlugin.git</developerConnection>
+        <url>https://github.com/zmb96/ZeroCkate_ServerApiPlugin</url>
+    </scm>
+
     <build>
         <defaultGoal>clean package</defaultGoal>
         <plugins>
+            <!-- 编译插件 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -28,6 +57,8 @@
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
+
+            <!-- Shade 打包插件 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -38,10 +69,87 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <!-- 排除 provided 范围的依赖 -->
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- ===== 新增4：源码包插件 ===== -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ===== 新增5：JavaDoc 插件 ===== -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.6.3</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <additionalJOption>-Xdoclint:none</additionalJOption>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ===== 新增6：GPG 签名插件 ===== -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <passphrase>${gpg.passphrase}</passphrase>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ===== 新增7：中央仓库发布插件 ===== -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.4.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                </configuration>
+            </plugin>
         </plugins>
+
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -50,7 +158,12 @@
         </resources>
     </build>
 
+    <!-- 保留你的 repositories，但发布时不会影响 -->
     <repositories>
+        <repository>
+            <id>essentialsx-repo</id>
+            <url>https://repo.essentialsx.net/releases/</url>
+        </repository>
         <repository>
             <id>papermc-repo</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
@@ -62,10 +175,6 @@
         <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
-        </repository>
-        <repository>
-            <id>essentialsx-repo</id>
-            <url>https://repo.essentialsx.net/releases/</url>
         </repository>
     </repositories>
 
