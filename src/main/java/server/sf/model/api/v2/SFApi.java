@@ -10,6 +10,7 @@ import server.sf.model.api.v2.economy.SFEconomy;
 import server.sf.model.api.v2.event.SFEvents;
 import server.sf.model.api.v2.feature.chat.ChatManager;
 import server.sf.model.api.v2.feature.permission.PermissionManager;
+import server.sf.model.api.v2.feature.perf.PerformanceManager;
 import server.sf.model.api.v2.feature.tick.TickManager;
 import server.sf.model.api.v2.feature.world.WorldManager;
 import server.sf.model.api.v2.main.SFLogger;
@@ -40,6 +41,8 @@ public interface SFApi {
     WorldManager world();
 
     PermissionManager permission();
+
+    PerformanceManager perf();
 
     void info(String msg);
 

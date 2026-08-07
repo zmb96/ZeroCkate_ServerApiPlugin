@@ -68,6 +68,9 @@ public final class main extends JavaPlugin {
         SF.sf().reach();
         SF.sf().regCommand("sfreach", new server.sf.model.api.v2.feature.main.ReachCommand(SF.sf().reach()));
 
+        SF.sf().perf();
+        SF.sf().regCommand("sfperf", new server.sf.model.api.v2.feature.perf.PerformanceCommand(SF.sf().perf()));
+
         SF.sf().info("插件已加载");
         SF.sf().info("Economy ready: " + SF.sf().eco().ready() + " (Essentials=" + SF.sf().eco().hasEssentials() + ", Vault=" + SF.sf().eco().hasVault() + ")");
     }

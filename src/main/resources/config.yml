@@ -52,3 +52,35 @@ teleport:
   # TPA 请求超时（秒）
   tpa:
     timeout: 60
+
+# 性能优化系统配置
+performance:
+  # 内存监控
+  memory:
+    enabled: true
+    warn-threshold: 0.85
+    gc-threshold: 0.90
+  # 区块管理
+  chunk:
+    enabled: true
+    idle-ticks: 6000
+    max-unload-per-cycle: 50
+  # 实体清理
+  entity:
+    enabled: true
+    item-expire-ticks: 1200
+    projectile-expire-ticks: 200
+    max-per-chunk: 50
+  # TPS 自适应
+  throttle:
+    enabled: true
+    tps-warn: 18.0
+    tps-critical: 15.0
+    min-view-distance: 4
+    max-view-distance: 32
+    min-simulation-distance: 3
+    max-simulation-distance: 32
+  # 监控间隔（SF tick，100tick=1秒）
+  monitor-interval: 200
+  # 清理间隔（SF tick）
+  cleanup-interval: 600

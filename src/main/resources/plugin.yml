@@ -52,6 +52,11 @@ commands:
     description: SF 交互距离
     usage: /sfreach <info|set|add|reset|help>
     aliases: [sfre]
+  sfperf:
+    description: SF 性能优化系统
+    usage: /sfperf <status|tps|mem|gc|chunks|entities|toggle|help>
+    aliases: [sfpf]
+    permission: sf.admin.perf
 
 permissions:
   servermanagement.use:
@@ -77,4 +82,7 @@ permissions:
     default: op
   sf.admin.reach:
     description: 交互距离管理
+    default: op
+  sf.admin.perf:
+    description: 性能优化系统
     default: op

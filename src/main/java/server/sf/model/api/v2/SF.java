@@ -22,6 +22,7 @@ import server.sf.model.api.v2.feature.chat.ChatManager;
 import server.sf.model.api.v2.feature.world.WorldManager;
 import server.sf.model.api.v2.feature.permission.PermissionManager;
 import server.sf.model.api.v2.feature.main.ReachManager;
+import server.sf.model.api.v2.feature.perf.PerformanceManager;
 import server.sf.model.api.v2.main.SFCommandOps;
 import server.sf.model.api.v2.main.SFLogger;
 import server.sf.model.api.v2.main.SFPlayerOps;
@@ -52,6 +53,7 @@ public final class SF implements SFApi {
     private WorldManager worldManager;
     private PermissionManager permissionManager;
     private ReachManager reachManager;
+    private PerformanceManager perfManager;
 
     private SF(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -79,8 +81,9 @@ public final class SF implements SFApi {
         if (instance != null) {
             if (instance.enchantAttrListener != null) instance.enchantAttrListener.shutdown();
             if (instance.enchantManager != null) instance.enchantManager.unregisterAll();
-            if (instance.itemListener != null) instance.itemListener.shutdown();
-            if (instance.itemManager != null) instance.itemManager.unregisterAll();
+        if (instance.itemListener != null) instance.itemListener.shutdown();
+        if (instance.itemManager != null) instance.itemManager.unregisterAll();
+        if (instance.perfManager != null) instance.perfManager.shutdown();
             instance.events.unregisterAll();
             instance.tickManager.shutdown();
             instance.plugin.getServer().getServicesManager().unregister(instance);
@@ -163,6 +166,16 @@ public final class SF implements SFApi {
             SF.sf().info("[Reach] System initialized");
         }
         return reachManager;
+    }
+
+    public PerformanceManager perf() {
+        if (perfManager == null) {
+            perfManager = new PerformanceManager(plugin);
+            perfManager.start();
+            regEvent(new server.sf.model.api.v2.feature.perf.PerformanceListener(perfManager), plugin);
+            SF.sf().info("[Perf] System initialized");
+        }
+        return perfManager;
     }
 
     @Override
