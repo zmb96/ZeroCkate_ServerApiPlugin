@@ -1,5 +1,6 @@
 package server.sf.model.api.v2.feature.chat;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import server.sf.model.api.v2.SF;
@@ -7,6 +8,7 @@ import server.sf.model.api.v2.feature.tick.TickManager;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ChatManager {
 
@@ -15,6 +17,8 @@ public class ChatManager {
     private final Map<String, ChatChannel> channels = new ConcurrentHashMap<>();
     private final Map<UUID, MuteEntry> muted = new ConcurrentHashMap<>();
     private final Set<String> blockedWords = ConcurrentHashMap.newKeySet();
+    private final List<ChatHandler> handlers = new CopyOnWriteArrayList<>();
+    private final Set<UUID> pluginListening = ConcurrentHashMap.newKeySet();
     private final TickManager tickManager;
 
     public ChatManager(TickManager tickManager) {
@@ -169,5 +173,84 @@ public class ChatManager {
             }
         }
         return nearby;
+    }
+
+    public void markListening(Player player) {
+        pluginListening.add(player.getUniqueId());
+    }
+
+    public void markListening(UUID playerId) {
+        pluginListening.add(playerId);
+    }
+
+    public void unmarkListening(Player player) {
+        pluginListening.remove(player.getUniqueId());
+    }
+
+    public void unmarkListening(UUID playerId) {
+        pluginListening.remove(playerId);
+    }
+
+    public boolean isPluginListening(Player player) {
+        return pluginListening.contains(player.getUniqueId());
+    }
+
+    public boolean isPluginListening(UUID playerId) {
+        return pluginListening.contains(playerId);
+    }
+
+    boolean checkAndClearListening(UUID playerId) {
+        return pluginListening.remove(playerId);
+    }
+
+    public void registerHandler(ChatHandler handler) {
+        handlers.add(handler);
+        handlers.sort(Comparator.comparingInt(ChatHandler::priority));
+    }
+
+    public void unregisterHandler(ChatHandler handler) {
+        handlers.remove(handler);
+    }
+
+    public List<ChatHandler> getHandlers() {
+        return Collections.unmodifiableList(handlers);
+    }
+
+    void dispatch(ChatContextImpl ctx) {
+        for (ChatHandler h : handlers) {
+            if (ctx.cancelled()) break;
+            try {
+                h.handle(ctx);
+            } catch (Throwable t) {
+                SF.sf().error("[Chat] Handler {} threw: {}", h.getClass().getName(), t.getMessage());
+            }
+        }
+    }
+
+    static final class ChatContextImpl implements ChatHandler.ChatContext {
+        private final Player player;
+        private final String rawMessage;
+        private Component formattedMessage;
+        private boolean consumed;
+        private boolean cancelled;
+        private ChatChannel channel;
+
+        ChatContextImpl(Player player, String rawMessage, Component formatted, ChatChannel channel) {
+            this.player = player;
+            this.rawMessage = rawMessage;
+            this.formattedMessage = formatted;
+            this.channel = channel;
+        }
+
+        @Override public Player player() { return player; }
+        @Override public String rawMessage() { return rawMessage; }
+        @Override public Component formattedMessage() { return formattedMessage; }
+        @Override public void formattedMessage(Component c) { this.formattedMessage = c; }
+        @Override public boolean consumed() { return consumed; }
+        @Override public void consume() { this.consumed = true; }
+        @Override public boolean cancelled() { return cancelled; }
+        @Override public void cancel() { this.cancelled = true; }
+        @Override public ChatChannel channel() { return channel; }
+        @Override public void channel(ChatChannel c) { this.channel = c; }
     }
 }

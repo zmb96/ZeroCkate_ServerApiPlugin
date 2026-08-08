@@ -4,6 +4,7 @@
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Bukkit](https://img.shields.io/badge/Bukkit-1.21.5-green)
+![Version](https://img.shields.io/badge/Version-3.0.0-blue)
 ![License](https://img.shields.io/badge/License-GPLv3-blue)
 
 ## 目录
@@ -21,6 +22,9 @@
 - [⚡ SF Tick 系统](#-sf-tick-系统)
 - [🔮 自定义附魔系统](#-自定义附魔系统)
 - [🎒 自定义物品系统](#-自定义物品系统)
+- [📝 SFText 文本组件 API](#-sftext-文本组件-api)
+- [💬 聊天事件优先级 API](#-聊天事件优先级-api)
+- [🚀 性能优化系统](#-性能优化系统)
 - [🔐 权限列表](#-权限列表)
 - [⚙️ 配置文件](#️-配置文件)
 - [💻 开发者 API](#-开发者-api)
@@ -46,6 +50,9 @@
 - 🔑 **权限系统**：权限组、继承、前缀后缀、个人权限
 - 🔮 **附魔注册系统**：继承 `SEnchantment` 自定义附魔，铁砧附魔支持
 - 🎒 **物品注册系统**：继承 `SItem` 自定义物品，属性加成、交互事件
+- 📝 **SFText 文本组件**：物品精灵图、玩家头颅、富文本交互（URL/命令/复制/hover）
+- 💬 **聊天优先级 API**：`ChatHandler` 按优先级消费聊天消息，插件可拦截玩家输入
+- 🚀 **性能优化系统**：内存监控、区块卸载、实体清理、TPS 自适应视距
 - 🔌 **第三方接入**：通过 Bukkit ServicesManager 暴露 `SFApi` 接口
 - ⚡ **异步安全**：经济操作自动回滚
 
@@ -837,6 +844,214 @@ new ItemAttributeBonus(
 
 ---
 
+## 📝 SFText 文本组件 API
+
+`SFText` 是基于 Adventure Component 的富文本工具类，支持物品精灵图、玩家头颅、交互组件等，全部静态方法调用。
+
+### 物品精灵图
+
+在聊天消息中显示物品图标，鼠标悬停查看物品详情：
+
+```java
+import server.sf.model.api.v2.feature.text.SFText;
+
+// 显示玩家手持物品（hover 弹出物品 NBT 信息）
+Component c = SFText.item(player.getInventory().getItemInMainHand());
+
+// 自定义显示名
+Component c = SFText.item(itemStack, "附魔剑");
+```
+
+### 玩家头颅
+
+```java
+// 按 OfflinePlayer 显示
+Component c = SFText.skull(player);
+
+// 按 UUID + 名称
+Component c = SFText.skull(uuid, "Steve");
+
+// 按 base64 材质
+Component c = SFText.skullByTexture(base64Texture, "自定义头");
+```
+
+### 交互组件
+
+```java
+SFText.url("点击打开", "https://github.com")       // 点击打开链接
+SFText.command("执行", "/spawn")                    // 点击执行命令
+SFText.suggest("填入", "/msg ")                     // 点击填入聊天框
+SFText.copy("复制IP", "mc.example.com")             // 点击复制到剪贴板
+SFText.tooltip("悬停查看", "这是提示文字")            // hover 提示
+```
+
+### Builder 链式拼接
+
+```java
+Component msg = SFText.builder()
+    .append("获得: ", NamedTextColor.GOLD)
+    .appendItem(itemStack)
+    .append("  ")
+    .appendSkull(player)
+    .append("  ")
+    .appendUrl("查看详情", "https://...")
+    .build();
+player.sendMessage(msg);
+```
+
+### 辅助方法
+
+| 方法 | 说明 |
+|------|------|
+| `text(String)` | 纯文本组件 |
+| `text(String, NamedTextColor)` | 带颜色文本 |
+| `text(String, String hexColor)` | HEX 颜色文本 |
+| `newline()` | 换行 |
+| `separator()` | 分隔线 |
+| `plain(Component)` | Component 转纯文本 |
+
+---
+
+## 💬 聊天事件优先级 API
+
+通过 `ChatHandler` 接口注册聊天处理器，按优先级依次执行。插件可以拦截玩家聊天作为输入，或修改消息内容。
+
+### 核心概念
+
+| 方法 | 作用 |
+|------|------|
+| `ctx.consume()` | 消息是插件输入，不广播到聊天 |
+| `ctx.cancel()` | 中断后续 handler 执行 |
+| `ctx.formattedMessage(Component)` | 修改消息内容 |
+| `ctx.channel(ChatChannel)` | 切换消息频道 |
+
+### 注册 Handler
+
+```java
+SF.sf().chat().registerHandler(new ChatHandler() {
+    @Override public int priority() { return 10; }  // 数值越小越先执行
+
+    @Override public void handle(ChatContext ctx) {
+        // 修改消息内容
+        ctx.formattedMessage(
+            SFText.builder()
+                .append("[自定义] ")
+                .append(ctx.formattedMessage())
+                .build()
+        );
+    }
+});
+```
+
+### 插件输入拦截示例
+
+```java
+// 插件等待玩家输入确认
+SF.sf().chat().registerHandler(new ChatHandler() {
+    @Override public int priority() { return 5; }
+
+    @Override public void handle(ChatContext ctx) {
+        if (waitingInput.containsKey(ctx.player().getUniqueId())
+                && ctx.rawMessage().equals("确认")) {
+            ctx.consume();  // 吃掉消息，不广播
+            handleConfirm(ctx.player());
+        }
+    }
+});
+```
+
+### 一次性输入标记
+
+如果插件只需要玩家下一条消息作为输入，可以使用 `markListening` 机制：
+
+```java
+// 标记玩家，下一条聊天消息会被吞掉（不广播）
+SF.sf().chat().markListening(player);
+
+// 判断当前是否在监听
+if (SF.sf().isPluginListenerChat(player)) {
+    // true → 消息不会发出
+}
+
+// 中途取消
+SF.sf().chat().unmarkListening(player);
+```
+
+> `markListening` 是一次性消费：标记后玩家下一条消息被拦截，标记自动清除。
+
+### 处理流程
+
+```
+玩家发消息
+  ↓
+禁言检查 → 过滤词 → 频道格式化
+  ↓
+dispatch（按 priority 顺序）
+  ├─ Handler A (priority=5): 检查是不是插件输入 → consume()
+  ├─ Handler B (priority=10): 修改消息内容
+  └─ Handler C (priority=20): cancel() → C 之后的 handler 不再执行
+  ↓
+consumed == true → 不广播
+consumed == false → 正常广播到频道
+```
+
+---
+
+## 🚀 性能优化系统
+
+通过 `/sfperf` 命令管理，4 大优化模块全部基于 SF Tick 系统异步运行。
+
+### 命令
+
+```
+/sfperf              # 完整状态报告
+/sfperf tps          # TPS + MSPT
+/sfperf mem          # 内存使用
+/sfperf gc           # 手动 GC
+/sfperf chunks       # 手动清理区块
+/sfperf entities     # 手动清理实体
+/sfperf toggle <feature>  # 开关某个模块
+/sfperf help         # 帮助
+```
+
+**权限**：`sf.admin.perf`
+
+### 优化模块
+
+**1. 内存监控**（每 2 秒）
+- 读取 JMX Heap 使用率
+- 85% 告警，90% 自动触发 `System.gc()`
+
+**2. 区块管理**（每 6 秒）
+- 自动卸载无玩家、无实体的空闲区块
+- 每周期最多卸载 50 个，避免卡顿
+
+**3. 实体清理**（每 6 秒）
+- 掉落物超过 60 秒自动清除
+- 无主弹射物超过 10 秒清除
+- 单区块实体超过 50 个时清理多余掉落物/弹射物
+
+**4. TPS 自适应**（每 2 秒）
+- TPS < 15：视距/模拟距离降到最小值
+- TPS < 18：视距 -2，模拟距离 -1
+- TPS 正常：恢复最大值
+
+### API
+
+```java
+PerformanceManager perf = SF.sf().perf();
+
+perf.getTps();           // 获取当前 TPS（double[3]）
+perf.getUsedMemory();    // 已用内存（MB）
+perf.getMaxMemory();     // 最大内存（MB）
+perf.toggle("memory");   // 开关内存监控
+perf.toggle("chunks");   // 开关区块管理
+perf.toggle("entities"); // 开关实体清理
+perf.toggle("throttle"); // 开关 TPS 自适应
+```
+
+---
+
 ## 🔐 权限列表
 
 ### 默认权限
@@ -856,6 +1071,7 @@ new ItemAttributeBonus(
 | `sf.admin.permission` | 权限管理 `/sfperm` | OP |
 | `sf.admin.enchant` | 附魔管理 `/sfenchant` | OP |
 | `sf.admin.item` | 物品管理 `/sfitem` | OP |
+| `sf.admin.perf` | 性能管理 `/sfperf` | OP |
 
 ### 系统权限
 
@@ -1675,7 +1891,7 @@ API 遵循语义化版本：
 - **Minor**（如 v2.1 → v2.2）：新增功能，向后兼容
 - **Patch**（如 v2.1.1 → v2.1.2）：Bug 修复
 
-当前 API 版本：**v2**
+当前 API 版本：**v3**
 
 包名 `server.sf.model.api.v2` 中的 `v2` 即为 Major 版本号。未来如有破坏性变更会新增 `v3` 包并保留 `v2`。
 
@@ -2246,7 +2462,43 @@ A：SF 使用 GPLv3 协议，允许商用、修改、分发，但衍生作品必
 
 本项目版本变更记录遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-### [1.2.0] - 2026-08-05
+### [3.0.0] - 2026-08-07
+
+#### ✨ 新增
+
+**SFText 文本组件 API（v2/feature/text/）**
+- `SFText`：基于 Adventure Component 的富文本工具类
+- 物品精灵图：`item(ItemStack)` / `item(ItemStack, String)` — hover 显示物品详情
+- 玩家头颅：`skull(OfflinePlayer)` / `skull(UUID, String)` / `skullByTexture(String, String)`
+- 交互组件：`url()` / `command()` / `suggest()` / `copy()` / `tooltip()`
+- `Builder` 链式拼接，支持 appendItem / appendSkull / appendUrl 等
+- 辅助方法：`text()` / `newline()` / `separator()` / `plain()`
+
+**聊天事件优先级 API（v2/feature/chat/）**
+- `ChatHandler` 接口：按 priority 依次执行，数值越小越先执行
+- `ChatContext`：`consume()` 不广播、`cancel()` 中断链、`formattedMessage()` 修改内容、`channel()` 切换频道
+- `markListening` / `unmarkListening` / `isPluginListening` — 一次性输入拦截
+- `SF.isPluginListenerChat(Player)` — 判断玩家是否被标记
+- `ChatManager.registerHandler()` / `unregisterHandler()` — 线程安全注册
+
+**性能优化系统（v2/feature/perf/）**
+- `PerformanceManager`：4 大优化模块，基于 SF Tick 异步运行
+- 内存监控：JMX Heap 读取，85% 告警，90% 自动 GC
+- 区块管理：自动卸载空闲区块，每周期最多 50 个
+- 实体清理：掉落物 60 秒、弹射物 10 秒、单区块 50 实体阈值
+- TPS 自适应：TPS < 15 降最小视距，TPS < 18 降 2，正常恢复
+- `PerformanceCommand`：`/sfperf`（`/sfp`）命令
+- `PerformanceListener`：事件追踪
+
+#### 🛠️ 变更
+- `SF.java` 新增 `perf()` 入口方法和 `isPluginListenerChat()` 方法
+- `ChatManager` 新增 `pluginListening` Set 和 handler 注册/分发机制
+- `ChatListener` 重构：先检查 `markListening`，再走禁言/过滤/handler 链
+- `ChatHandler.ChatContext` 拆分 `consume`（不广播）和 `cancel`（中断链）两个概念
+- `pom.xml` 版本号升级到 3.0.0
+- README.md 新增 SFText / 聊天优先级 / 性能优化三个章节
+
+### [2.0.0] - 2026-08-05
 
 #### ✨ 新增
 
@@ -2485,7 +2737,9 @@ server.sf.model.api.v2/
     ├── chat/            # 聊天系统
     ├── permission/      # 权限系统
     ├── enchant/         # 附魔注册系统
-    └── item/            # 物品注册系统
+    ├── item/            # 物品注册系统
+    ├── text/            # SFText 文本组件 API
+    └── perf/            # 性能优化系统
 ```
 
 **命名约定**

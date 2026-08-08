@@ -1,6 +1,7 @@
 package server.sf.model.api.v2.feature.chat;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
+import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -20,6 +21,12 @@ public class ChatListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onChat(AsyncChatEvent e) {
         Player p = e.getPlayer();
+
+        if (manager.checkAndClearListening(p.getUniqueId())) {
+            e.setCancelled(true);
+            return;
+        }
+
         if (manager.isMuted(p)) {
             SF.sf().msg(p, "§c你已被禁言" + (manager.muteReason(p) != null ? ": " + manager.muteReason(p) : "")
                     + (manager.muteRemaining(p) > 0 ? " §7(剩余 " + manager.muteRemaining(p) + "秒)" : ""));
@@ -27,20 +34,28 @@ public class ChatListener implements Listener {
             return;
         }
 
-        String raw = SF.sf().bukkit().getConsoleSender().getName();
         String message = e.message().toString();
         message = message.replaceAll("^\"|\"$", "");
         message = manager.filterMessage(message);
 
         ChatManager.ChatChannel channel = manager.getChannel(p);
         String formatted = channel.prefix + manager.format(p, message);
+        Component formattedComponent = Component.text(formatted);
+
+        ChatManager.ChatContextImpl ctx = new ChatManager.ChatContextImpl(p, message, formattedComponent, channel);
+        manager.dispatch(ctx);
 
         e.setCancelled(true);
 
-        for (Player recipient : manager.getRecipients(p, channel)) {
-            SF.sf().msg(recipient, formatted);
+        if (ctx.consumed()) {
+            return;
         }
-        SF.sf().msg(SF.sf().bukkit().getConsoleSender(), formatted);
+
+        Component finalComponent = ctx.formattedMessage();
+        for (Player recipient : manager.getRecipients(p, ctx.channel())) {
+            recipient.sendMessage(finalComponent);
+        }
+        SF.sf().bukkit().getConsoleSender().sendMessage(finalComponent);
     }
 
     @EventHandler

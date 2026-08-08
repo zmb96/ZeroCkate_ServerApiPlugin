@@ -38,8 +38,6 @@ public final class main extends JavaPlugin {
         teleportManager = new TeleportManager(this);
         SF.sf().setTeleportManager(teleportManager);
 
-        SF.sf().regEvent(new PlayerJoinOrQuitEvent(this), this);
-
         SF.sf()
                 .regCommand("servermanagement", new servermanagement(this))
                 .regCommand("ru", new rulescom())

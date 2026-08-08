@@ -142,6 +142,14 @@ public final class SF implements SFApi {
         return chatManager;
     }
 
+    public boolean isPluginListenerChat(Player player) {
+        return chatManager != null && chatManager.isPluginListening(player);
+    }
+
+    public boolean isPluginListenerChat(UUID playerId) {
+        return chatManager != null && chatManager.isPluginListening(playerId);
+    }
+
     public WorldManager world() {
         if (worldManager == null) {
             worldManager = new WorldManager();

@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
+import java.io.IOException;
 
 @Deprecated
 public class PlayerJoinOrQuitEvent implements Listener {
@@ -23,7 +24,7 @@ public class PlayerJoinOrQuitEvent implements Listener {
     }
 
     @EventHandler
-    public void JoinMessage(PlayerJoinEvent e) {
+    public void JoinMessage(PlayerJoinEvent e) throws IOException {
         Player p = e.getPlayer();
         String n = p.getName();
         String us = p.getUniqueId().toString();
@@ -49,19 +50,21 @@ public class PlayerJoinOrQuitEvent implements Listener {
                 '&', jm
         ));
         if (c.contains("giveit."+us)) {
-            return;
+        } else {
+            p.getInventory().addItem(i1);
+            p.getInventory().addItem(i2);
+            p.getInventory().addItem(i3);
+            p.getInventory().addItem(i4);
+            p.getInventory().addItem(i5);
+            p.getInventory().addItem(i6);
+            p.getInventory().addItem(i7);
+            p.getInventory().addItem(i8);
+            Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes(
+                    '&', c1.getString("server.sf.model.api.v1.JoQMess.NewPlayerJoin").replace("{player}", n)
+            ));
+            c.set("giveit."+us, n);
+            c.save("giveit.yml");
         }
-        p.getInventory().addItem(i1);
-        p.getInventory().addItem(i2);
-        p.getInventory().addItem(i3);
-        p.getInventory().addItem(i4);
-        p.getInventory().addItem(i5);
-        p.getInventory().addItem(i6);
-        p.getInventory().addItem(i7);
-        p.getInventory().addItem(i8);
-        Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes(
-                '&', c1.getString("server.sf.model.api.v1.JoQMess.NewPlayerJoin").replace("{player}", n)
-        ));
     }
     @EventHandler
     public void QuitMessage(PlayerQuitEvent e) {

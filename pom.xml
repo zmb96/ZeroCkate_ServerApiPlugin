@@ -8,7 +8,7 @@
     <groupId>io.github.zmb96</groupId>
     <artifactId>ZeroCkate_ServerApiPlugin</artifactId>
     <!-- ===== 修改2：去掉 -SNAPSHOT ===== -->
-    <version>2.0.0</version>
+    <version>3.0.0</version>
     <packaging>jar</packaging>
 
     <name>ZeroCkate ServerApi Plugin</name>
