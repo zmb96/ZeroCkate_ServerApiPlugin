@@ -44,6 +44,10 @@ public interface SFApi {
 
     PerformanceManager perf();
 
+    boolean isPluginListenerChat(Player player);
+
+    boolean isPluginListenerChat(UUID playerId);
+
     void info(String msg);
 
     void info(String fmt, Object... args);

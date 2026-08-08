@@ -142,10 +142,12 @@ public final class SF implements SFApi {
         return chatManager;
     }
 
+    @Override
     public boolean isPluginListenerChat(Player player) {
         return chatManager != null && chatManager.isPluginListening(player);
     }
 
+    @Override
     public boolean isPluginListenerChat(UUID playerId) {
         return chatManager != null && chatManager.isPluginListening(playerId);
     }
