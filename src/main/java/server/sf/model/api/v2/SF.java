@@ -8,6 +8,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import server.sf.model.api.v2.database.Database;
+import server.sf.model.api.v2.database.DatabaseManager;
 import server.sf.model.api.v2.economy.SFEconomy;
 import server.sf.model.api.v2.event.SFEvents;
 import server.sf.model.api.v2.feature.enchant.EnchantAttributeListener;
@@ -67,6 +69,7 @@ public final class SF implements SFApi {
         this.serverOps = new SFServerOps();
         this.tickManager = new TickManager(plugin);
         this.tickManager.start();
+        DatabaseManager.init(plugin);
     }
 
     public static void init(JavaPlugin plugin) {
@@ -87,6 +90,7 @@ public final class SF implements SFApi {
         if (instance.perfManager != null) instance.perfManager.shutdown();
             instance.events.unregisterAll();
             instance.tickManager.shutdown();
+            DatabaseManager.shutdown();
             instance.plugin.getServer().getServicesManager().unregister(instance);
         }
         instance = null;
@@ -193,6 +197,11 @@ public final class SF implements SFApi {
     public SFAttr attr() {
         SFAttr.ensureLoaded();
         return SFAttr.INSTANCE;
+    }
+
+    @Override
+    public Database database() {
+        return DatabaseManager.db();
     }
 
     @Override

@@ -26,6 +26,7 @@
 - [📝 SFText 文本组件 API](#-sftext-文本组件-api)
 - [💬 聊天事件优先级 API](#-聊天事件优先级-api)
 - [🚀 性能优化系统](#-性能优化系统)
+- [🗄️ SQLite / MySQL 数据库 API](#-sqlite--mysql-数据库-api)
 - [🔐 权限列表](#-权限列表)
 - [⚙️ 配置文件](#️-配置文件)
 - [💻 开发者 API](#-开发者-api)
@@ -1189,6 +1190,164 @@ perf.toggle("throttle"); // 开关 TPS 自适应
 
 ---
 
+## 🗄️ SQLite / MySQL 数据库 API
+
+SF 插件内置数据库系统，默认使用 SQLite（零配置），也可切换 MySQL。通过 `sf().database()` 获取 `Database` 接口，直接执行 SQL。
+
+### 获取 Database 实例
+
+```java
+Database db = sf().database();
+```
+
+### Database 接口
+
+```java
+public interface Database {
+    boolean connect();
+    void disconnect();
+    boolean isConnected();
+    Connection connection();
+    int executeUpdate(String sql, Object... params);
+    <T> T executeQuery(String sql, Function<ResultSet, T> mapper, Object... params);
+}
+```
+
+### 建表
+
+```java
+Database db = sf().database();
+
+db.executeUpdate("CREATE TABLE IF NOT EXISTS player_tags (" +
+    "uuid VARCHAR(36) NOT NULL," +
+    "tag_id VARCHAR(64) NOT NULL," +
+    "purchased_at BIGINT NOT NULL," +
+    "PRIMARY KEY (uuid, tag_id)" +
+    ")");
+```
+
+### 插入 / 更新 / 删除
+
+```java
+// 插入
+db.executeUpdate(
+    "INSERT OR IGNORE INTO player_tags (uuid, tag_id, purchased_at) VALUES (?, ?, ?)",
+    player.getUniqueId().toString(), "tag1", System.currentTimeMillis()
+);
+
+// 更新
+db.executeUpdate(
+    "UPDATE player_tags SET tag_id = ? WHERE uuid = ?",
+    "tag2", player.getUniqueId().toString()
+);
+
+// 删除
+db.executeUpdate(
+    "DELETE FROM player_tags WHERE uuid = ? AND tag_id = ?",
+    player.getUniqueId().toString(), "tag1"
+);
+```
+
+### 查询
+
+```java
+// 查询单值
+boolean has = db.executeQuery(
+    "SELECT COUNT(*) AS c FROM player_tags WHERE uuid = ? AND tag_id = ?",
+    rs -> {
+        try {
+            return rs.next() ? rs.getInt("c") > 0 : false;
+        } catch (Exception e) {
+            return false;
+        }
+    },
+    player.getUniqueId().toString(), "tag1"
+);
+
+// 查询列表
+List<String> owned = db.executeQuery(
+    "SELECT tag_id FROM player_tags WHERE uuid = ?",
+    rs -> {
+        List<String> list = new ArrayList<>();
+        try {
+            while (rs.next()) list.add(rs.getString("tag_id"));
+        } catch (Exception ignored) {
+        }
+        return list;
+    },
+    player.getUniqueId().toString()
+);
+```
+
+### 内置数据表
+
+SF 启动时自动创建以下表：
+
+| 表名 | 用途 | 主键 |
+|------|------|------|
+| `homes` | 玩家家园传送点 | (uuid, name) |
+| `warps` | 公共传送点 | name |
+| `last_locations` | 玩家最后位置 | uuid |
+
+第三方插件可通过 `sf().database()` 创建自己的表，与 SF 共享同一个数据库连接。
+
+### 配置切换
+
+默认 SQLite，切换 MySQL 编辑 `config.yml`：
+
+```yaml
+database:
+  mysql:
+    enabled: true        # true=MySQL, false=SQLite
+    host: localhost
+    port: 3306
+    database: minecraft
+    user: root
+    password: "你的密码"
+    prefix: "sf_"
+  sqlite:
+    file: data.db
+```
+
+### 完整示例：前缀购买系统
+
+```java
+public class TagManager {
+    private final Database db = SF.sf().database();
+
+    public void init() {
+        db.executeUpdate("CREATE TABLE IF NOT EXISTS player_tags (" +
+            "uuid VARCHAR(36) NOT NULL," +
+            "tag_id VARCHAR(64) NOT NULL," +
+            "purchased_at BIGINT NOT NULL," +
+            "PRIMARY KEY (uuid, tag_id)" +
+            ")");
+    }
+
+    public boolean has(Player player, String tagId) {
+        Integer count = db.executeQuery(
+            "SELECT COUNT(*) AS c FROM player_tags WHERE uuid = ? AND tag_id = ?",
+            rs -> { try { return rs.next() ? rs.getInt("c") : 0; } catch (Exception e) { return 0; } },
+            player.getUniqueId().toString(), tagId
+        );
+        return count != null && count > 0;
+    }
+
+    public boolean buy(Player player, String tagId, double price) {
+        SF sf = SF.sf();
+        if (sf.balance(player) < price) return false;
+        if (!sf.takeMoney(player, price)) return false;
+        int rows = db.executeUpdate(
+            "INSERT OR IGNORE INTO player_tags (uuid, tag_id, purchased_at) VALUES (?, ?, ?)",
+            player.getUniqueId().toString(), tagId, System.currentTimeMillis()
+        );
+        return rows > 0;
+    }
+}
+```
+
+---
+
 ## 🔐 权限列表
 
 ### 默认权限
@@ -1513,6 +1672,7 @@ public interface SFApi {
     ChatManager chat();
     WorldManager world();
     PermissionManager permission();
+    Database database();
 
     // 日志快捷方法
     void info(String msg);

@@ -6,6 +6,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
+import server.sf.model.api.v2.database.Database;
 import server.sf.model.api.v2.economy.SFEconomy;
 import server.sf.model.api.v2.event.SFEvents;
 import server.sf.model.api.v2.feature.chat.ChatManager;
@@ -46,6 +47,8 @@ public interface SFApi {
     PerformanceManager perf();
 
     SFAttr attr();
+
+    Database database();
 
     boolean isPluginListenerChat(Player player);
 
