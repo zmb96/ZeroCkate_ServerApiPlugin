@@ -14,6 +14,8 @@ import server.sf.model.api.v2.feature.item.MagicScepterItem;
 import server.sf.model.api.v2.feature.item.SFItemCommand;
 import server.sf.model.api.v2.feature.chat.ChatCommand;
 import server.sf.model.api.v2.feature.chat.ChatManager;
+import server.sf.model.api.v2.feature.main.ReachCommand;
+import server.sf.model.api.v2.feature.perf.PerformanceCommand;
 import server.sf.model.api.v2.feature.permission.PermissionCommand;
 import server.sf.model.api.v2.feature.permission.PermissionManager;
 import server.sf.model.api.v2.feature.world.WorldCommand;
@@ -45,6 +47,8 @@ public final class main extends JavaPlugin {
                 .regCommand("ty", new tycon(this))
                 .regCommand("giveit", new giveit(this));
 
+        SF.sf().regEvent(new PlayerJoinOrQuitEvent(this));
+
         EnchantManager em = SF.sf().enchant();
         em.register(new LifestealEnchant());
         em.register(new AncestralMightEnchant());
@@ -64,10 +68,10 @@ public final class main extends JavaPlugin {
         SF.sf().regCommand("sfperm", new PermissionCommand(permManager));
 
         SF.sf().reach();
-        SF.sf().regCommand("sfreach", new server.sf.model.api.v2.feature.main.ReachCommand(SF.sf().reach()));
+        SF.sf().regCommand("sfreach", new ReachCommand(SF.sf().reach()));
 
         SF.sf().perf();
-        SF.sf().regCommand("sfperf", new server.sf.model.api.v2.feature.perf.PerformanceCommand(SF.sf().perf()));
+        SF.sf().regCommand("sfperf", new PerformanceCommand(SF.sf().perf()));
 
         SF.sf().info("插件已加载");
         SF.sf().info("Economy ready: " + SF.sf().eco().ready() + " (Essentials=" + SF.sf().eco().hasEssentials() + ", Vault=" + SF.sf().eco().hasVault() + ")");

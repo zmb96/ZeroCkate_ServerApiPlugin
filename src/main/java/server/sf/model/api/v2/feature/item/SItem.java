@@ -12,54 +12,30 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import server.sf.model.api.v2.SF;
+import server.sf.model.api.v2.feature.enchant.SFAttr;
 
-import java.lang.reflect.Field;
 import java.util.*;
 
 public abstract class SItem {
 
     private static Plugin plugin;
-    private static final Map<String, org.bukkit.attribute.Attribute> attrCache = new HashMap<>();
 
-    public static void init(Plugin p) { plugin = p; }
+    public static void init(Plugin p) {
+        plugin = p;
+        SFAttr.ensureLoaded();
+    }
 
     public static org.bukkit.attribute.Attribute findAttribute(String name) {
-        if (attrCache.containsKey(name)) return attrCache.get(name);
-        org.bukkit.attribute.Attribute result = null;
-        String matched = null;
-
-        String upper = name.toUpperCase();
-        String core = upper;
-        if (core.startsWith("GENERIC_")) core = core.substring(8);
-        if (core.startsWith("PLAYER_")) core = core.substring(7);
-
-        String[] candidates = {
-                upper,
-                core,
-                "GENERIC_" + core,
-                "PLAYER_" + core
-        };
-
-        for (String candidate : candidates) {
-            try {
-                Field f = org.bukkit.attribute.Attribute.class.getField(candidate);
-                Object val = f.get(null);
-                if (val instanceof org.bukkit.attribute.Attribute a) {
-                    result = a;
-                    matched = candidate;
-                    break;
-                }
-            } catch (Exception ignored) {}
-        }
+        SFAttr.ensureLoaded();
+        org.bukkit.attribute.Attribute a = SFAttr.get(name);
         if (plugin != null) {
-            if (matched != null) {
-                SF.sf().info("[Item] Attribute lookup: '" + name + "' -> matched '" + matched + "'");
+            if (a != null) {
+                SF.sf().info("[Item] Attribute lookup: '" + name + "' -> matched '" + a.name() + "'");
             } else {
-                SF.sf().warn("[Item] Attribute lookup FAILED: '" + name + "' (tried: " + String.join(", ", candidates) + ")");
+                SF.sf().warn("[Item] Attribute lookup FAILED: '" + name + "'");
             }
         }
-        attrCache.put(name, result);
-        return result;
+        return a;
     }
 
     public abstract String id();

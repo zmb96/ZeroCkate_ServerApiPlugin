@@ -21,34 +21,49 @@ public abstract class SEnchantment {
     private static final Map<String, Attribute> attrCache = new ConcurrentHashMap<>();
     private int levelCache;
 
-    public static void init(Plugin p) { plugin = p; }
+    public static void init(Plugin p) {
+        plugin = p;
+        SFAttr.ensureLoaded();
+    }
 
     public static Attribute findAttribute(String name) {
+        if (name == null) return null;
+        SFAttr.ensureLoaded();
         if (attrCache.containsKey(name)) return attrCache.get(name);
 
-        String upper = name.toUpperCase();
-        String core = upper;
-        if (core.startsWith("GENERIC_")) core = core.substring(8);
-        if (core.startsWith("PLAYER_")) core = core.substring(7);
-
-        String[] candidates = {upper, core, "GENERIC_" + core, "PLAYER_" + core};
-
-        Attribute result = null;
-        for (String candidate : candidates) {
-            try {
-                Field f = Attribute.class.getField(candidate);
-                Object val = f.get(null);
-                if (val instanceof Attribute a) {
-                    result = a;
-                    break;
-                }
-            } catch (Exception ignored) {}
+        Attribute direct = SFAttr.get(name);
+        if (direct != null) {
+            attrCache.put(name, direct);
+            return direct;
         }
 
-        if (result != null && plugin != null) {
-            SF.sf().info("[Enchant] Attribute resolved: " + name + " -> " + result.name());
-        } else if (plugin != null) {
-            SF.sf().warn("[Enchant] Attribute not found: " + name);
+        String upper = name.toUpperCase();
+        String base = upper.replaceAll("^(GENERIC_|PLAYER_|ZOMBIE_)", "");
+        String[] candidates = {base, "GENERIC_" + base, "PLAYER_" + base, "ZOMBIE_" + base};
+
+        Attribute result = null;
+        String matched = null;
+        for (String candidate : candidates) {
+            Attribute found = SFAttr.get(candidate);
+            if (found != null) { result = found; matched = candidate; break; }
+        }
+
+        if (result == null) {
+            for (String candidate : candidates) {
+                try {
+                    Field f = Attribute.class.getField(candidate);
+                    Object val = f.get(null);
+                    if (val instanceof Attribute a) { result = a; matched = candidate; break; }
+                } catch (Exception ignored) {}
+            }
+        }
+
+        if (plugin != null) {
+            if (result != null) {
+                SF.sf().info("[Enchant] Attribute resolved: '" + name + "' -> '" + matched + "' (" + result.name() + ")");
+            } else {
+                SF.sf().warn("[Enchant] Attribute not found: '" + name + "' (tried: " + String.join(", ", candidates) + ")");
+            }
         }
         attrCache.put(name, result);
         return result;

@@ -36,38 +36,7 @@ public class EnchantAttributeListener implements Listener {
 
     private org.bukkit.attribute.Attribute findAttribute(String name) {
         if (attrCache.containsKey(name)) return attrCache.get(name);
-        org.bukkit.attribute.Attribute result = null;
-        String matched = null;
-
-        String upper = name.toUpperCase();
-        String core = upper;
-        if (core.startsWith("GENERIC_")) core = core.substring(8);
-        if (core.startsWith("PLAYER_")) core = core.substring(7);
-
-        String[] candidates = {
-                upper,
-                core,
-                "GENERIC_" + core,
-                "PLAYER_" + core
-        };
-
-        for (String candidate : candidates) {
-            try {
-                Field f = org.bukkit.attribute.Attribute.class.getField(candidate);
-                Object val = f.get(null);
-                if (val instanceof org.bukkit.attribute.Attribute a) {
-                    result = a;
-                    matched = candidate;
-                    break;
-                }
-            } catch (Exception ignored) {}
-        }
-
-        if (matched != null) {
-            SF.sf().info("[Enchant] Attribute lookup: '" + name + "' -> matched '" + matched + "'");
-        } else {
-            SF.sf().warn("[Enchant] Attribute lookup FAILED: '" + name + "' (tried: " + String.join(", ", candidates) + ")");
-        }
+        org.bukkit.attribute.Attribute result = SEnchantment.findAttribute(name);
         attrCache.put(name, result);
         return result;
     }

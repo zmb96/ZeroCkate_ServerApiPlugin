@@ -4,7 +4,7 @@
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Bukkit](https://img.shields.io/badge/Bukkit-1.21.5-green)
-![Version](https://img.shields.io/badge/Version-3.0.0-blue)
+![Version](https://img.shields.io/badge/Version-3.1.0-blue)
 ![License](https://img.shields.io/badge/License-GPLv3-blue)
 
 ## 目录
@@ -21,6 +21,7 @@
     - [物品系统命令](#物品系统命令)
 - [⚡ SF Tick 系统](#-sf-tick-系统)
 - [🔮 自定义附魔系统](#-自定义附魔系统)
+- [🎯 SFAttr 属性常量库](#-sfattr-属性常量库)
 - [🎒 自定义物品系统](#-自定义物品系统)
 - [📝 SFText 文本组件 API](#-sftext-文本组件-api)
 - [💬 聊天事件优先级 API](#-聊天事件优先级-api)
@@ -49,6 +50,7 @@
 - 💬 **聊天系统**：多频道、禁言、脏话过滤、聊天格式化
 - 🔑 **权限系统**：权限组、继承、前缀后缀、个人权限
 - 🔮 **附魔注册系统**：继承 `SEnchantment` 自定义附魔，铁砧附魔支持
+- 🎯 **SFAttr 属性常量库**：全部 Bukkit Attribute 枚举封装、中文名、快捷构造，自动兼容多版本
 - 🎒 **物品注册系统**：继承 `SItem` 自定义物品，属性加成、交互事件
 - 📝 **SFText 文本组件**：物品精灵图、玩家头颅、富文本交互（URL/命令/复制/hover）
 - 💬 **聊天优先级 API**：`ChatHandler` 按优先级消费聊天消息，插件可拦截玩家输入
@@ -673,6 +675,141 @@ tableListener.addBlacklistWorld("world_nether");    // 黑名单世界
 - 附魔书等级 ≥ 物品现有等级：取最高等级
 - 与现有附魔冲突时无法附魔
 - 消耗经验 = `anvilCost() × 最终等级`
+
+---
+
+## 🎯 SFAttr 属性常量库
+
+`SFAttr` 封装了 **全部 Bukkit `Attribute` 枚举**，提供静态常量、中文名映射、快捷构造方法，通过 `sf().attr()` 访问，自动兼容不同 Paper 版本（`GENERIC_` 前缀 / 无前缀）。
+
+### 获取方式
+
+```java
+SFAttr attr = sf().attr();  // 获取实例（推荐）
+// 或静态工具方法：
+Attribute a = SFAttr.get(SFAttr.MAX_HEALTH);
+```
+
+### 静态属性常量（30+）
+
+不区分大小写，可写 `MAX_HEALTH` / `GENERIC_MAX_HEALTH` / `max_health`，系统自动查找：
+
+| 常量 | 中文名 | 默认值参考 |
+|------|--------|-----------|
+| `MAX_HEALTH` | 最大生命 | 20.0 |
+| `MOVEMENT_SPEED` | 移动速度 | 0.1 |
+| `FLYING_SPEED` | 飞行速度 | 0.4 |
+| `ATTACK_DAMAGE` | 攻击伤害 | 1.0 |
+| `ATTACK_SPEED` | 攻击速度 | 4.0 |
+| `ATTACK_KNOCKBACK` | 攻击击退 | 0.0 |
+| `KNOCKBACK_RESISTANCE` | 击退抗性 | 0.0 |
+| `ARMOR` | 护甲 | 0.0 |
+| `ARMOR_TOUGHNESS` | 护甲韧性 | 0.0 |
+| `FALL_DAMAGE_MULTIPLIER` | 坠落伤害倍率 | 1.0 |
+| `LUCK` | 幸运 | 0.0 |
+| `MAX_ABSORPTION` | 最大吸收值 | 0.0 |
+| `BLOCK_INTERACTION_RANGE` | 方块交互距离 | 4.5 |
+| `ENTITY_INTERACTION_RANGE` | 实体交互距离 | 3.0 |
+| `GRAVITY` | 重力 | 0.08 |
+| `SAFE_FALL_DISTANCE` | 安全坠落距离 | 3.0 |
+| `BURNING_TIME` | 燃烧时间 | - |
+| `MOVEMENT_EFFICIENCY` | 移动效率 | - |
+| `OXYGEN_BONUS` | 氧气加成 | - |
+| `WATER_MOVEMENT_EFFICIENCY` | 水中移动效率 | - |
+| `ATTACK_TIME` | 攻击冷却 | - |
+| `MINING_EFFICIENCY` | 挖掘效率 | - |
+| `SNEAKING_SPEED` | 潜行速度 | - |
+| `SUBMERGED_MINING_SPEED` | 水下挖掘速度 | - |
+| `SWEEPING_DAMAGE_RATIO` | 横扫伤害比率 | - |
+| `TEMPT_RANGE` | 吸引范围 | - |
+| `SCALE` | 实体缩放 | 1.0 |
+| `STEP_HEIGHT` | 台阶高度 | 0.6 |
+| `EXPLOSION_KNOCKBACK_REDUCTION` | 爆炸击退减免 | - |
+| `SPAWN_REINFORCEMENTS` | 僵尸增援率 | 0.0 |
+
+### 工具方法
+
+```java
+// 静态查询方法
+Attribute a = SFAttr.get("MAX_HEALTH");       // 按名查找
+boolean exists = SFAttr.exists("MAX_HEALTH");  // 是否存在
+int count = SFAttr.count();                    // 当前版本加载的属性总数
+Set<String> names = SFAttr.allNames();         // 所有属性名
+Collection<Attribute> all = SFAttr.all();      // 所有 Attribute 对象
+String zh = SFAttr.display("MAX_HEALTH");      // 中文名："最大生命"
+```
+
+### 附魔 AttributeBonus 快捷构造
+
+通过 `sf().attr().xxx(base, perLevel)` 一行构造 `SEnchantment.AttributeBonus`：
+
+```java
+@Override
+public List<AttributeBonus> attributes() {
+    SFAttr attr = sf().attr();
+    return Arrays.asList(
+        attr.maxHealth(4.0, 2.0),               // +最大生命：4 + 2×(等级-1)
+        attr.attackDamage(3.0, 1.5),             // +攻击伤害：3 + 1.5×(等级-1)
+        attr.movementSpeed(0.05, 0.02),          // +移动速度：5% + 2%/级
+        attr.armor(2.0, 1.0),                    // +护甲
+        attr.attackKnockback(0.5, 0.2),           // +攻击击退
+        attr.luck(1.0, 0.5),                      // +幸运
+        attr.fallDamageMul(0.9, -0.05),           // 坠落伤害倍率×(0.9 - 0.05/级)
+        attr.scale(0.02, 0.01),                   // +体型缩放
+        attr.miningEfficiency(0.1, 0.05),         // +挖掘效率
+        attr.sweepingDamage(0.1, 0.05)            // +横扫伤害比率
+    );
+}
+```
+
+### 所有快捷方法一览
+
+| 方法 | 说明 | 默认操作 |
+|------|------|---------|
+| `maxHealth(base, perLevel)` | 最大生命 | ADD |
+| `attackDamage(base, perLevel)` | 攻击伤害 | ADD |
+| `attackSpeed(base, perLevel)` | 攻击速度 | ADD |
+| `attackKnockback(base, perLevel)` | 攻击击退 | ADD |
+| `movementSpeed(base, perLevel)` | 移动速度 | ADD |
+| `flyingSpeed(base, perLevel)` | 飞行速度 | ADD |
+| `knockbackResistance(base, perLevel)` | 击退抗性 | ADD |
+| `armor(base, perLevel)` | 护甲 | ADD |
+| `armorToughness(base, perLevel)` | 护甲韧性 | ADD |
+| `luck(base, perLevel)` | 幸运 | ADD |
+| `maxAbsorption(base, perLevel)` | 最大吸收 | ADD |
+| `blockRange(base, perLevel)` | 方块交互距离 | ADD |
+| `entityRange(base, perLevel)` | 实体交互距离 | ADD |
+| `followRange(base, perLevel)` | 追踪范围 | ADD |
+| `fallDamageMul(base, perLevel)` | 坠落伤害倍率 | MULTIPLY |
+| `gravity(base, perLevel)` | 重力 | ADD |
+| `safeFallDistance(base, perLevel)` | 安全坠落距离 | ADD |
+| `scale(base, perLevel)` | 实体缩放 | ADD |
+| `stepHeight(base, perLevel)` | 台阶高度 | ADD |
+| `miningEfficiency(base, perLevel)` | 挖掘效率 | ADD |
+| `sweepingDamage(base, perLevel)` | 横扫伤害比率 | ADD |
+| `sneakSpeed(base, perLevel)` | 潜行速度 | ADD |
+| `submergedMining(base, perLevel)` | 水下挖掘速度 | ADD |
+| `waterMoveEff(base, perLevel)` | 水中移动效率 | ADD |
+| `oxygenBonus(base, perLevel)` | 氧气加成 | ADD |
+| `moveEfficiency(base, perLevel)` | 移动效率 | ADD |
+| `burningTime(base, perLevel)` | 燃烧时间 | ADD |
+| `attackTime(base, perLevel)` | 攻击冷却 | ADD |
+| `temptRange(base, perLevel)` | 吸引范围 | ADD |
+| `explosionKnockbackReduction(base, perLevel)` | 爆炸击退减免 | ADD |
+| `add(name, attr, base, perLevel)` | 自定义 ADD 加成 | ADD |
+| `multiply(name, attr, base, perLevel)` | 自定义 MULTIPLY 加成 | MULTIPLY |
+| `add(name, attr, base, perLevel, op, slot)` | 完全自定义构造 | 自由指定 |
+
+### 多版本兼容原理
+
+Paper 1.21+ 的 `Attribute` 枚举去除了 `GENERIC_` 前缀（旧版为 `GENERIC_MAX_HEALTH`，新版为 `MAX_HEALTH`）。`SFAttr` + `SEnchantment.findAttribute()` 的查找策略为：
+
+1. 先从 `Attribute.values()` 预加载 **当前服务端** 的所有属性名
+2. 查找时依次尝试：`无前缀` → `GENERIC_前缀` → `PLAYER_前缀` → `ZOMBIE_前缀`
+3. 仍找不到则通过反射直接扫描 `Attribute.class` 的字段
+4. 结果写入缓存，后续零成本命中
+
+因此无论使用哪种写法（`MAX_HEALTH` 或 `GENERIC_MAX_HEALTH`），在任意 Paper 版本上都能正确解析。
 
 ---
 

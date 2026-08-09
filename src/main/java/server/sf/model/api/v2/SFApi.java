@@ -9,6 +9,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import server.sf.model.api.v2.economy.SFEconomy;
 import server.sf.model.api.v2.event.SFEvents;
 import server.sf.model.api.v2.feature.chat.ChatManager;
+import server.sf.model.api.v2.feature.enchant.SFAttr;
 import server.sf.model.api.v2.feature.permission.PermissionManager;
 import server.sf.model.api.v2.feature.perf.PerformanceManager;
 import server.sf.model.api.v2.feature.tick.TickManager;
@@ -43,6 +44,8 @@ public interface SFApi {
     PermissionManager permission();
 
     PerformanceManager perf();
+
+    SFAttr attr();
 
     boolean isPluginListenerChat(Player player);
 

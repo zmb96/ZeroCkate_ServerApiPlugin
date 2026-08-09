@@ -63,7 +63,7 @@ public class PlayerJoinOrQuitEvent implements Listener {
                     '&', c1.getString("server.sf.model.api.v1.JoQMess.NewPlayerJoin").replace("{player}", n)
             ));
             c.set("giveit."+us, n);
-            c.save("giveit.yml");
+            c.save(file);
         }
     }
     @EventHandler

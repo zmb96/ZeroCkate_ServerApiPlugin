@@ -13,6 +13,7 @@ import server.sf.model.api.v2.event.SFEvents;
 import server.sf.model.api.v2.feature.enchant.EnchantAttributeListener;
 import server.sf.model.api.v2.feature.enchant.EnchantManager;
 import server.sf.model.api.v2.feature.enchant.SEnchantment;
+import server.sf.model.api.v2.feature.enchant.SFAttr;
 import server.sf.model.api.v2.feature.item.ItemListener;
 import server.sf.model.api.v2.feature.item.ItemManager;
 import server.sf.model.api.v2.feature.item.SItem;
@@ -186,6 +187,12 @@ public final class SF implements SFApi {
             SF.sf().info("[Perf] System initialized");
         }
         return perfManager;
+    }
+
+    @Override
+    public SFAttr attr() {
+        SFAttr.ensureLoaded();
+        return SFAttr.INSTANCE;
     }
 
     @Override
