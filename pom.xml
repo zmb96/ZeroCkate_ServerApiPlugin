@@ -6,14 +6,13 @@
 
     <!-- ===== 修改1：groupId 改为 io.github.你的GitHub用户名 ===== -->
     <groupId>io.github.zmb96</groupId>
-    <artifactId>ZeroCkate_ServerApiPlugin</artifactId>
-    <!-- ===== 修改2：去掉 -SNAPSHOT ===== -->
-    <version>3.1.0</version>
+    <artifactId>ZeroEngine</artifactId>
+    <version>3.2.0-LTS</version>
     <packaging>jar</packaging>
 
-    <name>ZeroCkate ServerApi Plugin</name>
-    <description>A Minecraft server plugin providing server-side API</description>
-    <url>https://github.com/zmb96/ZeroCkate_ServerApiPlugin</url>
+    <name>ZeroEngine</name>
+    <description>A Minecraft server engine providing vanilla manipulation API</description>
+    <url>https://github.com/zmb96/ZeroEngine</url>
 
     <properties>
         <java.version>21</java.version>
@@ -40,9 +39,9 @@
 
     <!-- ===== 新增3：源码管理地址（必填） ===== -->
     <scm>
-        <connection>scm:git:git://github.com/zmb96/ZeroCkate_ServerApiPlugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/zmb96/ZeroCkate_ServerApiPlugin.git</developerConnection>
-        <url>https://github.com/zmb96/ZeroCkate_ServerApiPlugin</url>
+        <connection>scm:git:git://github.com/zmb96/ZeroEngine.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/zmb96/ZeroEngine.git</developerConnection>
+        <url>https://github.com/zmb96/ZeroEngine</url>
     </scm>
 
     <build>

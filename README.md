@@ -1,10 +1,10 @@
-# ZeroCkate ServerManagementPlugin
+# ZeroEngine
 
-> 一款现代化、模块化的 Minecraft 服务器管理插件，提供完整的管理员工具、传送系统、经济系统，并对外暴露简洁的 API 供其他插件调用。
+> 一款现代化、模块化的 Minecraft 服务器引擎，提供完整的服务器管理工具、原版操控能力和简洁的 API 供其他插件调用。
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Bukkit](https://img.shields.io/badge/Bukkit-1.21.5-green)
-![Version](https://img.shields.io/badge/Version-3.1.0-blue)
+![Version](https://img.shields.io/badge/Version-4.0.0-blue)
 ![License](https://img.shields.io/badge/License-GPLv3-blue)
 
 ## 目录
@@ -27,10 +27,21 @@
 - [💬 聊天事件优先级 API](#-聊天事件优先级-api)
 - [🚀 性能优化系统](#-性能优化系统)
 - [🗄️ SQLite / MySQL 数据库 API](#-sqlite--mysql-数据库-api)
+- [⚙️ ZeroEngine 原版操控引擎](#-zeroengine-原版操控引擎)
+    - [怪物属性操控](#怪物属性操控)
+    - [伤害系统操控](#伤害系统操控)
+    - [方块/挖掘操控](#方块挖掘操控)
+    - [实体生成操控](#实体生成操控)
+    - [资源包管理](#资源包管理)
 - [🔐 权限列表](#-权限列表)
 - [⚙️ 配置文件](#️-配置文件)
 - [💻 开发者 API](#-开发者-api)
     - [API 接口文档](#api-接口文档)
+    - [玩法功能 API（v3 新增）](#玩法功能-apiv3-新增)
+        - [🛏️ 起床战争（Bedwars）](#-起床战争bedwars)
+        - [⚔️ PVP 竞技（PvPArena）](#-pvp-竞技pvparena)
+        - [🧟 惊变尸潮（Horde）](#-惊变尸潮horde)
+        - [🏰 保卫村庄（VillageDefense）](#-保卫村庄villagedefense)
     - [API 接入示例](#api-接入示例)
 - [❓ 常见问题](#-常见问题)
 - [📝 变更日志](#-变更日志)
@@ -56,6 +67,7 @@
 - 📝 **SFText 文本组件**：物品精灵图、玩家头颅、富文本交互（URL/命令/复制/hover）
 - 💬 **聊天优先级 API**：`ChatHandler` 按优先级消费聊天消息，插件可拦截玩家输入
 - 🚀 **性能优化系统**：内存监控、区块卸载、实体清理、TPS 自适应视距
+- ⚙️ **ZeroEngine 原版操控引擎**：怪物属性、伤害系统、方块挖掘、实体生成、资源包管理 5 大引擎模块
 - 🔌 **第三方接入**：通过 Bukkit ServicesManager 暴露 `SFApi` 接口
 - ⚡ **异步安全**：经济操作自动回滚
 
@@ -1348,6 +1360,356 @@ public class TagManager {
 
 ---
 
+## ⚙️ ZeroEngine 原版操控引擎
+
+ZeroEngine 4.0 核心功能，提供 5 大原版操控模块，全部作为 API 供外部插件调用。引擎本身不参与具体业务逻辑，仅提供操控能力。
+
+### 获取方式
+
+```java
+SF sf = SF.sf();
+
+MonsterAttribute monster = sf.monster();
+DamageSystem damage = sf.damage();
+BlockControl block = sf.block();
+SpawnControl spawn = sf.spawn();
+ResourcePackManager resourcePack = sf.resourcePack();
+```
+
+所有引擎模块均采用懒加载，首次调用时自动初始化并注册事件监听器。
+
+---
+
+### 怪物属性操控
+
+`MonsterAttribute` — 对原版生物的属性进行精确控制。
+
+| 方法 | 说明 |
+|------|------|
+| `setBaseDamage(entity, damage)` | 设置基础攻击伤害 |
+| `setBaseHealth(entity, health)` | 设置基础最大生命值（同时修正当前血量） |
+| `setBaseSpeed(entity, speed)` | 设置基础移动速度 |
+| `setBaseKnockbackResistance(entity, resistance)` | 设置击退抗性 |
+| `setBaseArmor(entity, armor)` | 设置护甲值 |
+| `setBaseArmorToughness(entity, toughness)` | 设置护甲韧性 |
+| `scale(entity, healthMul, damageMul, speedMul)` | 按倍率缩放属性 |
+| `reset(entity)` | 重置所有属性到默认值 |
+| `get(attribute, entity)` | 获取属性当前值 |
+| `set(attribute, entity, value)` | 设置任意属性基础值 |
+| `addModifier(attribute, entity, name, amount, operation)` | 添加属性修饰器 |
+| `removeModifier(attribute, entity, name)` | 移除属性修饰器 |
+| `applyPersistent(entityId, modifiers)` | 持久化属性修饰（跨tick保持） |
+| `getPersistent(entityId)` | 获取持久化属性 |
+| `clearPersistent(entityId)` | 清除持久化属性 |
+
+**使用示例：**
+
+```java
+SF sf = SF.sf();
+MonsterAttribute ma = sf.monster();
+
+// 设置僵尸属性
+Zombie zombie = world.spawn(loc, Zombie.class);
+ma.setBaseHealth(zombie, 100);
+ma.setBaseDamage(zombie, 20);
+ma.setBaseSpeed(zombie, 0.35);
+
+// 按倍率缩放（困难模式）
+ma.scale(zombie, 2.0, 1.5, 1.2);
+
+// 添加自定义修饰器
+ma.addModifier(
+    Attribute.GENERIC_ATTACK_SPEED,
+    zombie,
+    "fast_attack",
+    2.0,
+    AttributeModifier.Operation.ADD_NUMBER
+);
+
+// 重置
+ma.reset(zombie);
+```
+
+---
+
+### 伤害系统操控
+
+`DamageSystem` — 自定义伤害计算公式、PvP 控制、护甲穿透。
+
+| 方法 | 说明 |
+|------|------|
+| `registerDamageModifier(name, priority, fn)` | 注册伤害修改器（按优先级执行） |
+| `unregisterDamageModifier(name)` | 移除伤害修改器 |
+| `calculateDamage(attacker, victim, rawDamage, cause)` | 手动计算伤害 |
+| `setPvpEnabled(enabled)` | 全局 PvP 开关 |
+| `isPvpEnabled()` | 查询全局 PvP 状态 |
+| `setPvpEnabled(worldId, enabled)` | 按世界设置 PvP |
+| `isPvpEnabled(worldId)` | 查询世界 PvP 状态 |
+| `setDamageMultiplier(cause, multiplier)` | 设置伤害类型倍率 |
+| `getDamageMultiplier(cause)` | 获取伤害类型倍率 |
+| `resetDamageMultiplier(cause)` | 重置伤害类型倍率 |
+| `setArmorPenetration(percent)` | 设置护甲穿透百分比（0~1） |
+| `getArmorPenetration()` | 获取护甲穿透 |
+| `setCustomDamage(attacker, victim, damage)` | 对特定目标设置固定伤害 |
+| `clearCustomDamage(attacker)` | 清除自定义伤害 |
+
+**DamageContext 接口：**
+
+```java
+public interface DamageContext {
+    LivingEntity attacker();    // 攻击者
+    LivingEntity victim();      // 受害者
+    double rawDamage();         // 原始伤害
+    DamageCause cause();        // 伤害原因
+    boolean isCritical();       // 是否暴击
+    void setDamage(double d);   // 修改最终伤害
+    void setCancelled(boolean c); // 取消伤害
+    boolean isCancelled();      // 是否已取消
+}
+```
+
+**使用示例：**
+
+```java
+SF sf = SF.sf();
+DamageSystem ds = sf.damage();
+
+// 关闭 PvP
+ds.setPvpEnabled(false);
+
+// 按世界关闭 PvP
+ds.setPvpEnabled(world.getUID(), false);
+
+// 摔伤减半
+ds.setDamageMultiplier(DamageCause.FALL, 0.5);
+
+// 30% 护甲穿透
+ds.setArmorPenetration(0.3);
+
+// 注册自定义伤害修改器（高优先级）
+ds.registerDamageModifier("boss_resist", 100, (ctx, dmg) -> {
+    if (ctx.victim() instanceof Boss) {
+        return dmg * 0.7; // Boss 受到 30% 减伤
+    }
+    return dmg;
+});
+
+// 对特定玩家固定伤害
+ds.setCustomDamage(attacker, victim, 50.0);
+```
+
+---
+
+### 方块/挖掘操控
+
+`BlockControl` — 修改原版方块的挖掘速度、爆炸抗性、掉落物等。
+
+| 方法 | 说明 |
+|------|------|
+| `setBreakSpeed(material, speed)` | 设置挖掘速度倍率 |
+| `getBreakSpeed(material)` | 获取挖掘速度 |
+| `resetBreakSpeed(material)` | 重置挖掘速度 |
+| `setBlastResistance(material, resistance)` | 设置爆炸抗性 |
+| `getBlastResistance(material)` | 获取爆炸抗性 |
+| `resetBlastResistance(material)` | 重置爆炸抗性 |
+| `setDrop(material, drop, chance)` | 设置自定义掉落物和概率 |
+| `getDrop(material)` | 获取自定义掉落物 |
+| `resetDrop(material)` | 重置掉落物 |
+| `setExpDrop(material, minExp, maxExp)` | 设置经验掉落范围 |
+| `resetExpDrop(material)` | 重置经验掉落 |
+| `registerBreakHandler(material, handler)` | 注册方块破坏处理器 |
+| `unregisterBreakHandler(material)` | 移除方块破坏处理器 |
+| `setRequireTool(material, requireTool)` | 设置是否需要工具才能挖掘 |
+| `isRequireTool(material)` | 查询是否需要工具 |
+| `setReplaceOnBreak(material, replaceWith)` | 破坏后替换为其他方块 |
+| `cancelBlockUpdate(location, radius)` | 取消区域内的方块更新 |
+| `getModifiedBreakSpeeds()` | 获取所有已修改的挖掘速度 |
+| `getModifiedBlastResistances()` | 获取所有已修改的爆炸抗性 |
+
+**使用示例：**
+
+```java
+SF sf = SF.sf();
+BlockControl bc = sf.block();
+
+// 钻石矿挖掘速度减半
+bc.setBreakSpeed(Material.DIAMOND_ORE, 0.5f);
+
+// 圆石掉落钻石（10% 概率）
+bc.setDrop(Material.STONE, new ItemStack(Material.DIAMOND), 0.1f);
+
+// 煤矿掉落 1~3 经验
+bc.setExpDrop(Material.COAL_ORE, 1, 3);
+
+// 黑曜石必须用镐子挖
+bc.setRequireTool(Material.OBSIDIAN, true);
+
+// 破坏草方块后替换为泥土
+bc.setReplaceOnBreak(Material.GRASS_BLOCK, Material.DIRT);
+
+// 注册自定义破坏处理器
+bc.registerBreakHandler(Material.SPAWNER, (player, block) -> {
+    if (!player.hasPermission("server.mine.spawner")) {
+        player.sendMessage("§c你没有权限破坏刷怪笼！");
+        return false; // 取消破坏
+    }
+    return true; // 允许破坏
+});
+```
+
+---
+
+### 实体生成操控
+
+`SpawnControl` — 控制原版怪物生成规则、概率、上限、黑名单。
+
+| 方法 | 说明 |
+|------|------|
+| `createRule(name, type, chance, maxPerChunk, worlds)` | 创建生成规则 |
+| `registerRule(rule)` | 注册生成规则 |
+| `unregisterRule(name)` | 移除生成规则 |
+| `getRule(name)` | 获取生成规则 |
+| `allRules()` | 获取全部生成规则 |
+| `blacklistEntity(type, worlds)` | 将实体加入世界黑名单 |
+| `unblacklistEntity(type, worlds)` | 从黑名单移除 |
+| `isBlacklisted(type, worldName)` | 查询是否在黑名单中 |
+| `setSpawnCap(worldId, type, cap)` | 设置世界内实体生成上限 |
+| `getSpawnCap(worldId, type)` | 获取生成上限 |
+| `registerSpawnFilter(filter)` | 注册实体类型过滤器 |
+| `unregisterSpawnFilter(filter)` | 移除实体类型过滤器 |
+| `registerLocationFilter(filter)` | 注册生成位置过滤器 |
+| `unregisterLocationFilter(filter)` | 移除生成位置过滤器 |
+| `forceSpawn(type, location, count)` | 强制在指定位置生成实体 |
+| `clearEntities(worldId, type)` | 清除世界内指定类型实体 |
+| `getEntityCounts(worldId)` | 获取世界内各实体数量统计 |
+
+**SpawnRule 接口：**
+
+```java
+public interface SpawnRule {
+    String name();              // 规则名称
+    EntityType type();          // 实体类型
+    double chance();            // 生成概率 (0~1)
+    int maxPerChunk();          // 每区块最大数量
+    List<String> worlds();      // 生效世界列表
+    boolean enabled();          // 是否启用
+    void setChance(double c);   // 修改概率
+    void setMaxPerChunk(int max); // 修改上限
+    void setEnabled(boolean e); // 启用/禁用
+}
+```
+
+**使用示例：**
+
+```java
+SF sf = SF.sf();
+SpawnControl sc = sf.spawn();
+
+// 创建僵尸生成规则：50% 概率，每区块最多 10 只，仅在 world 生效
+SpawnRule rule = sc.createRule("zombie_rule", EntityType.ZOMBIE, 0.5, 10, List.of("world"));
+sc.registerRule(rule);
+
+// 在主世界禁止苦力怕生成
+sc.blacklistEntity(EntityType.CREEPER, List.of("world"));
+
+// 设置世界内最多 20 只骷髅
+sc.setSpawnCap(world.getUID(), EntityType.SKELETON, 20);
+
+// 注册类型过滤器：禁止所有 boss 类型生成
+sc.registerSpawnFilter(type -> {
+    return type != EntityType.WITHER && type != EntityType.ENDER_DRAGON;
+});
+
+// 注册位置过滤器：出生点 100 格内不生成怪物
+sc.registerLocationFilter((type, loc) -> {
+    return loc.distance(loc.getWorld().getSpawnLocation()) > 100;
+});
+
+// 强制生成 5 只僵尸
+sc.forceSpawn(EntityType.ZOMBIE, location, 5);
+
+// 查看世界实体统计
+Map<EntityType, Integer> counts = sc.getEntityCounts(world.getUID());
+counts.forEach((type, count) -> System.out.println(type + ": " + count));
+```
+
+---
+
+### 资源包管理
+
+`ResourcePackManager` — 管理服务器资源包、自定义模型数据、音乐播放。
+
+| 方法 | 说明 |
+|------|------|
+| `create(name, url, hash, forced, promptMessage)` | 创建资源包定义 |
+| `register(pack)` | 注册资源包 |
+| `unregister(name)` | 移除资源包 |
+| `get(name)` | 获取资源包 |
+| `all()` | 获取全部资源包 |
+| `send(player, name)` | 向玩家发送指定资源包 |
+| `send(player, pack)` | 向玩家发送资源包对象 |
+| `sendAll(player)` | 向玩家发送所有资源包 |
+| `sendAll(player, onComplete)` | 发送所有资源包，完成后回调 |
+| `setCustomModelData(itemId, modelData, texturePath)` | 设置物品自定义模型数据 |
+| `getCustomModelData(itemId)` | 获取自定义模型数据 |
+| `registerMusic(id, soundName, durationTicks)` | 注册自定义音乐 |
+| `playMusic(player, id)` | 为玩家播放指定音乐 |
+| `stopMusic(player)` | 停止玩家所有音乐 |
+| `playMusicAll(id)` | 全服播放音乐 |
+| `stopMusicAll()` | 全服停止音乐 |
+| `setDefaultPack(pack)` | 设置默认资源包 |
+| `getDefaultPack()` | 获取默认资源包 |
+
+**ResourcePack 接口：**
+
+```java
+public interface ResourcePack {
+    String name();           // 资源包名称
+    String url();            // 下载地址
+    byte[] hash();           // SHA1 哈希
+    boolean forced();        // 是否强制
+    String promptMessage();  // 提示消息
+}
+```
+
+**使用示例：**
+
+```java
+SF sf = SF.sf();
+ResourcePackManager rpm = sf.resourcePack();
+
+// 注册资源包
+ResourcePack pack = rpm.create(
+    "sf_textures",
+    "https://example.com/pack.zip",
+    hashBytes,
+    true,
+    "§a请安装资源包以获得最佳体验"
+);
+rpm.register(pack);
+rpm.setDefaultPack(pack);
+
+// 玩家进服自动发送
+@EventHandler
+public void onJoin(PlayerJoinEvent e) {
+    rpm.send(e.getPlayer(), "sf_textures");
+}
+
+// 注册自定义音乐
+rpm.registerMusic("boss_fight", "music.boss_fight", 1200);
+
+// 播放音乐
+rpm.playMusic(e.getPlayer(), "boss_fight");
+
+// 全服停止音乐
+rpm.stopMusicAll();
+
+// 设置自定义模型数据
+rpm.setCustomModelData(Material.DIAMOND_SWORD.ordinal(), 100001, "items/sf_sword");
+```
+
+---
+
 ## 🔐 权限列表
 
 ### 默认权限
@@ -2538,6 +2900,759 @@ tp.back(player);
 
 ---
 
+### 玩法功能 API（v3 新增）
+
+v3 新增 4 大玩法模块，均通过 `SFApi` 暴露，采用接口 + 实现分离模式，懒加载（首次调用自动注册事件并启动 tick 线程）。
+
+| 玩法 | 入口方法 | 包路径 |
+|------|---------|--------|
+| 起床战争 | `api.bedwars()` | `server.sf.model.api.v3.feature.gameplay.bedwars` |
+| PVP 竞技 | `api.pvp()` | `server.sf.model.api.v3.feature.gameplay.pvp` |
+| 惊变尸潮 | `api.horde()` | `server.sf.model.api.v3.feature.gameplay.horde` |
+| 保卫村庄 | `api.villageDefense()` | `server.sf.model.api.v3.feature.gameplay.village` |
+
+> 💡 以下示例均假设已获取 API 实例：`SFApi api = SFApi.get();`
+
+#### 🛏️ 起床战争（Bedwars）
+
+**核心概念**：玩家分为多支队伍，每队拥有一张床。床被破坏后该队玩家死亡即淘汰，最后存活的队伍获胜。地图中设有资源生成器（铁锭/金锭/钻石/绿宝石），玩家用资源在商店购买装备。
+
+**枚举**
+
+```java
+Bedwars.GameState  // WAITING, COUNTDOWN, PLAYING, ENDING
+Bedwars.TeamColor  // RED, BLUE, GREEN, YELLOW, AQUA, WHITE, PINK, GRAY
+```
+
+**注册竞技场**
+
+```java
+Bedwars bw = api.bedwars();
+
+Map<Bedwars.TeamColor, Location> spawns = new HashMap<>();
+spawns.put(Bedwars.TeamColor.RED,   new Location(world, 100, 64, 0));
+spawns.put(Bedwars.TeamColor.BLUE,  new Location(world, -100, 64, 0));
+
+Map<Bedwars.TeamColor, Location> beds = new HashMap<>();
+beds.put(Bedwars.TeamColor.RED,  new Location(world, 105, 64, 5));
+beds.put(Bedwars.TeamColor.BLUE, new Location(world, -105, 64, 5));
+
+List<Map<String, Object>> generators = new ArrayList<>();
+Map<String, Object> ironGen = new HashMap<>();
+ironGen.put("location", new Location(world, 0, 65, 0));
+ironGen.put("material", Material.IRON_INGOT);
+ironGen.put("interval", 20); // 每 20 tick 掉落一次
+generators.add(ironGen);
+
+bw.registerArena(
+    "bw1",              // arenaId
+    "起床战争-1",        // 显示名
+    "world",            // 世界名
+    2,                  // 最少玩家
+    4,                  // 每队最大人数
+    spawns,             // 各队出生点
+    beds,               // 各队床位置
+    lobbyLoc,           // 等待大厅
+    spectatorLoc,       // 观战出生点
+    generators,         // 资源生成器配置
+    new ArrayList<>()   // 商店配置（可空）
+);
+```
+
+**玩家加入 / 离开**
+
+```java
+bw.join(player, "bw1", Bedwars.TeamColor.RED);  // 加入红队
+bw.leave(player);                                 // 离开游戏
+```
+
+**开始 / 结束游戏**
+
+```java
+bw.startCountdown("bw1", 10);        // 10 秒倒计时
+bw.forceStart("bw1");                 // 强制开始
+bw.forceEnd("bw1", TeamColor.RED);    // 强制结束，指定红队获胜（null = 平局）
+```
+
+**床破坏 & 方块保护**
+
+```java
+bw.breakBed(player, Bedwars.TeamColor.BLUE);  // 玩家破坏蓝队床
+bw.isProtected("bw1", x, y, z);               // 检查坐标是否受保护
+bw.placeBlock(player, x, y, z, Material.WOOL); // 放置方块（需在竞技场内）
+bw.breakBlock(player, x, y, z);                 // 破坏方块
+```
+
+**资源生成器控制**
+
+```java
+bw.dropGenerator("bw1", Bedwars.TeamColor.RED, Material.IRON_INGOT, 1, 40);
+// 在红队出生点附近每 40 tick 掉落 1 个铁锭
+
+bw.setResourceDrop(new Location(world, 0, 65, 0), Material.DIAMOND, 1);
+// 在指定位置设置资源掉落
+```
+
+**注册商店物品**
+
+```java
+bw.registerShopItem(
+    Material.IRON_SWORD,        // 图标
+    "铁剑",                      // 名称
+    10,                          // 价格
+    Material.IRON_INGOT,         // 货币类型
+    List.of(new ItemStack(Material.IRON_SWORD)),  // 奖励物品
+    p -> p.sendMessage("你购买了铁剑！")  // 购买回调
+);
+```
+
+**事件监听**
+
+```java
+bw.onEvent(e -> {
+    switch (e.type()) {
+        case GAME_START    -> api.broadcast("起床战争开始！");
+        case BED_BROKEN    -> {
+            Bedwars.TeamColor broken = (Bedwars.TeamColor) e.data();
+            api.broadcast(e.player().getName() + " 破坏了 " + broken.name + " 队的床！");
+        }
+        case PLAYER_DEATH  -> e.player().sendMessage("你死亡了");
+        case TEAM_ELIMINATED -> {
+            Bedwars.Team t = (Bedwars.Team) e.data();
+            api.broadcast(t.color().name + " 队被淘汰！");
+        }
+        case GAME_END      -> {
+            Bedwars.Team winner = (Bedwars.Team) e.data();
+            if (winner != null) api.broadcast(winner.color().name + " 队获胜！");
+        }
+    }
+});
+```
+
+**玩家统计**
+
+```java
+int kills     = bw.getKills(player, "bw1");
+int beds      = bw.getBedsBroken(player, "bw1");
+int deaths    = bw.getDeaths(player, "bw1");
+int wins      = bw.getWins(player, "bw1");
+bw.resetStats("bw1", player);  // 重置统计
+```
+
+---
+
+#### ⚔️ PVP 竞技（PvPArena）
+
+**核心概念**：支持多种对战模式（1v1、团队战、FFA、排位赛等），含 Kit 系统、ELO 等级、自动匹配队列。
+
+**枚举**
+
+```java
+PvPArena.GameState    // WAITING, COUNTDOWN, FIGHTING, ENDING
+PvPArena.Mode         // DUEL_1V1, TEAM_2V2, TEAM_3V3, TEAM_5V5, FFA, BATTLE_ROYALE, RANKED, PARTY
+PvPArena.MatchResult  // WIN_A, WIN_B, DRAW, CANCELLED
+```
+
+**注册竞技场**
+
+```java
+PvPArena pvp = api.pvp();
+
+pvp.registerArena(
+    "arena1",
+    "竞技场-1",
+    List.of(new Location(world, 50, 64, 0)),   // spawnsA 队A出生点
+    List.of(new Location(world, -50, 64, 0)),   // spawnsB 队B出生点
+    lobbyLoc,     // 等待大厅
+    specLoc,      // 观战点
+    10,           // 最大人数
+    List.of("DUEL_1V1", "TEAM_2V2", "FFA"),  // 允许的模式
+    false,        // 是否允许建造
+    false,        // 是否允许交互
+    30            // 比赛结束后重置秒数
+);
+```
+
+**注册 Kit（装备包）**
+
+```java
+pvp.registerKit(new PvPArena.Kit() {
+    @Override public String id() { return "warrior"; }
+    @Override public String name() { return "战士"; }
+    @Override public String permission() { return "sf.kit.warrior"; }
+    @Override public int price() { return 0; }
+    @Override public List<ItemStack> armor() {
+        return List.of(
+            new ItemStack(Material.IRON_HELMET),
+            new ItemStack(Material.IRON_CHESTPLATE),
+            new ItemStack(Material.IRON_LEGGINGS),
+            new ItemStack(Material.IRON_BOOTS)
+        );
+    }
+    @Override public List<ItemStack> inventory() {
+        return List.of(new ItemStack(Material.IRON_SWORD), new ItemStack(Material.GOLDEN_APPLE, 3));
+    }
+    @Override public List<String> effects() { return List.of("SPEED:1:600"); }
+    @Override public double healthScale() { return 20.0; }
+    @Override public double walkSpeed() { return 0.2; }
+});
+```
+
+**玩家加入 / 匹配**
+
+```java
+// 手动加入队伍
+pvp.joinTeamA(player, "arena1");
+pvp.joinTeamB(player, "arena1");
+pvp.joinFFA(player, "arena1");  // FFA 模式
+
+// 自动匹配队列
+pvp.queuePlayer(player, PvPArena.Mode.DUEL_1V1);
+pvp.dequeuePlayer(player);
+
+// 启动自动匹配器（定时检查队列并创建比赛）
+pvp.startAutoMatchmaking();
+pvp.setMatchmakerInterval(100); // 每 100 tick 检查一次
+
+// 设置 Kit
+pvp.setKit(player, "warrior");
+pvp.giveKit(player, "warrior");  // 直接发放 Kit 物品
+```
+
+**开始 / 结束比赛**
+
+```java
+pvp.startCountdown("arena1", 5);     // 5 秒倒计时
+pvp.forceStart("arena1");             // 强制开始
+pvp.forceEnd("arena1", PvPArena.MatchResult.WIN_A);  // 强制结束，A 队获胜
+```
+
+**击杀 / 死亡记录**
+
+```java
+PvPArena.Match m = pvp.matchOf(player);
+if (m != null) {
+    pvp.addKill(m, killer, victim);
+    pvp.addDeath(m, victim);
+    boolean pvpAllowed = pvp.isPvPAllowedInMatch(m);
+    pvp.damageMatchPlayer(m, attacker, victim, 10.0, EntityType.PLAYER);
+}
+```
+
+**ELO 等级系统**
+
+```java
+int elo = pvp.getElo(player);                    // 获取总 ELO
+int rankedElo = pvp.getElo(player, PvPArena.Mode.RANKED);  // 获取排位 ELO
+pvp.addElo(player, PvPArena.Mode.RANKED, 25);    // 增加 ELO
+pvp.setElo(player, PvPArena.Mode.RANKED, 1500);  // 设置 ELO
+
+PvPArena.Rank rank = pvp.getRank(elo);           // 获取段位
+// rank.tier(), rank.name(), rank.prefix(), rank.requiredElo()
+```
+
+**观战系统**
+
+```java
+pvp.registerSpectator(spectator, match);
+pvp.removeSpectator(spectator, match);
+List<Player> specs = pvp.spectators(match);
+```
+
+**事件监听**
+
+```java
+pvp.onEvent(e -> {
+    switch (e.type()) {
+        case START      -> api.broadcast("比赛开始！");
+        case KILL       -> {
+            Player killer = e.player();
+            Player victim = (Player) e.data();
+            api.broadcast(killer.getName() + " 击杀了 " + victim.getName());
+        }
+        case MATCH_END  -> {
+            PvPArena.MatchResult r = (PvPArena.MatchResult) e.data();
+            api.broadcast("比赛结束: " + r.name());
+        }
+        case ELO_CHANGE -> {
+            int newElo = (int) e.data();
+            e.player().sendMessage("你的 ELO 变更为: " + newElo);
+        }
+    }
+});
+```
+
+**玩家统计**
+
+```java
+int wins      = pvp.getWins(player, PvPArena.Mode.RANKED);
+int losses    = pvp.getLosses(player, PvPArena.Mode.RANKED);
+int streak    = pvp.getWinStreak(player, PvPArena.Mode.RANKED);
+int bestStreak = pvp.getBestWinStreak(player, PvPArena.Mode.RANKED);
+int kills     = pvp.getKills(player, PvPArena.Mode.RANKED);
+int deaths    = pvp.getDeaths(player, PvPArena.Mode.RANKED);
+pvp.resetStats(player);
+```
+
+---
+
+#### 🧟 惊变尸潮（Horde）
+
+**核心概念**：类似"尸潮"玩法，玩家作为幸存者在波次中对抗大量怪物。支持难度系统、精英怪/Boss、倒地/复活机制、血月事件。
+
+**枚举**
+
+```java
+Horde.GameState   // WAITING, COUNTDOWN, PREPARING, WAVE_ACTIVE, WAVE_INTERVAL, BOSS_WAVE, ENDING
+Horde.Difficulty  // EASY, NORMAL, HARD, NIGHTMARE, APOCALYPSE
+Horde.SpawnType   // NORMAL, ELITE, BOSS, SWARM, SPECIAL
+```
+
+**注册竞技场**
+
+```java
+Horde horde = api.horde();
+
+horde.registerArena(
+    "horde1",
+    "尸潮生存-1",
+    "world",
+    1,                   // 最少玩家
+    8,                   // 最大玩家
+    List.of(spawn1, spawn2),        // 玩家出生点
+    lobbyLoc,            // 大厅
+    specLoc,             // 观战点
+    List.of(mobSpawn1, mobSpawn2),  // 怪物出生点
+    100,                 // 边界半径
+    centerLoc,           // 边界中心
+    Horde.Difficulty.NORMAL,        // 默认难度
+    20,                  // 最大波次
+    30,                  // 准备时间（秒）
+    15,                  // 波次间隔（秒）
+    false                // 是否允许建造
+);
+```
+
+**玩家加入 / 开始**
+
+```java
+horde.join(player, "horde1");
+horde.startCountdown("horde1", 10);
+horde.forceStart("horde1");
+horde.forceEnd("horde1");
+```
+
+**创建指定难度的游戏**
+
+```java
+Horde.Game g = horde.createGame("horde1", Horde.Difficulty.NIGHTMARE);
+```
+
+**波次怪物规则**
+
+```java
+horde.addWaveMobRule("horde1", 1, new Horde.MobRule() {
+    @Override public EntityType type() { return EntityType.ZOMBIE; }
+    @Override public SpawnType spawnType() { return SpawnType.NORMAL; }
+    @Override public int weight() { return 100; }
+    @Override public int minCount() { return 5; }
+    @Override public int maxCount() { return 10; }
+    @Override public double healthMul() { return 1.0; }
+    @Override public double damageMul() { return 1.0; }
+    @Override public double speedMul() { return 1.0; }
+    @Override public List<String> effects() { return List.of(); }
+    @Override public Map<EntityType, Double> equipmentChance() { return Map.of(); }
+});
+
+horde.removeWaveMobRule("horde1", 1, EntityType.ZOMBIE);  // 移除规则
+```
+
+**难度倍率配置**
+
+```java
+horde.setDifficultyMultiplier(Horde.Difficulty.HARD, "health", 1.5);
+horde.setDifficultyMultiplier(Horde.Difficulty.HARD, "damage", 1.3);
+horde.setDifficultyMultiplier(Horde.Difficulty.HARD, "spawnCount", 2.0);
+double hpMul = horde.getDifficultyMultiplier(Horde.Difficulty.HARD, "health");
+```
+
+**注册精英怪 / Boss**
+
+```java
+horde.registerElite(
+    EntityType.ZOMBIE,       // 基础实体
+    "elite_zombie",          // 精英 ID
+    "精英僵尸",               // 显示名
+    3.0,                     // 血量倍率
+    2.0,                     // 伤害倍率
+    1.2,                     // 速度倍率
+    List.of("SPEED:2:99999", "STRENGTH:1:99999"),  // 永久药水效果
+    Map.of("skill_explosion", true)  // 技能配置
+);
+
+horde.registerBoss(
+    EntityType.WITHER,       // 基础实体
+    "boss_necromancer",      // Boss ID
+    "死灵法师",               // 显示名
+    5.0,                     // 血量倍率
+    3.0,                     // 伤害倍率
+    0.8,                     // 速度倍率
+    List.of("REGENERATION:2:99999"),
+    Map.of("skill_summon", true, "skill_teleport", true),
+    List.of(new ItemStack(Material.NETHER_STAR)),  // 掉落物
+    500                      // 击杀得分
+);
+```
+
+**倒地 / 复活机制**
+
+```java
+horde.downPlayer(player, 30);        // 玩家倒地，30 秒倒计时
+boolean downed = horde.isPlayerDowned(player);
+horde.revivePlayer(deadPlayer, reviver);  // 另一玩家复活倒地玩家
+```
+
+**波次奖励 / 击杀奖励**
+
+```java
+horde.registerWaveReward(
+    5,                                    // 第 5 波
+    List.of(new ItemStack(Material.DIAMOND, 2)),  // 物品奖励
+    100.0,                                // 每人金钱
+    200                                   // 每人得分
+);
+
+horde.registerKillReward(
+    EntityType.ZOMBIE,
+    10,                                   // 得分
+    5.0,                                  // 金钱
+    List.of(new ItemStack(Material.ROTTEN_FLESH))  // 掉落
+);
+```
+
+**血月事件**
+
+```java
+horde.setBloodMoonChance("horde1", 0.1);  // 10% 概率触发血月
+boolean bloodMoon = horde.isBloodMoon(game);  // 当前是否血月
+```
+
+**手动生成波次怪物**
+
+```java
+Horde.Game g = horde.getGame("horde1");
+Horde.Wave w = g.currentWave();
+int spawned = horde.spawnWaveMobs(g, w);
+horde.clearArenaMobs("horde1");  // 清空竞技场怪物
+```
+
+**事件监听**
+
+```java
+horde.onEvent(e -> {
+    switch (e.type()) {
+        case WAVE_START       -> api.broadcast("第 " + e.game().currentWave().number() + " 波开始！");
+        case BOSS_WAVE_START  -> api.broadcast("Boss 波次来袭！");
+        case PLAYER_DOWN      -> {
+            int timer = (int) e.data();
+            e.player().sendMessage("你倒地了！" + timer + " 秒内需要队友复活");
+        }
+        case PLAYER_REVIVE    -> api.broadcast(e.player().getName() + " 复活了一名队友");
+        case MOB_KILL         -> {
+            LivingEntity mob = (LivingEntity) e.data();
+            e.player().sendMessage("击杀 " + mob.getType().name());
+        }
+        case SURVIVOR_WIN     -> api.broadcast("幸存者胜利！");
+        case GAME_END         -> {
+            int wave = e.game().currentWave().number();
+            api.broadcast("游戏结束，存活到第 " + wave + " 波");
+        }
+    }
+});
+```
+
+**玩家统计**
+
+```java
+int waves    = horde.getWavesSurvived(player, "horde1");
+int kills    = horde.getTotalKills(player, "horde1");
+int deaths   = horde.getTotalDeaths(player, "horde1");
+int bestWave = horde.getBestWave(player, "horde1");
+int bestScore = horde.getBestScore(player, "horde1");
+int played   = horde.getGamesPlayed(player, "horde1");
+int won      = horde.getGamesWon(player, "horde1");
+horde.resetStats("horde1", player);
+```
+
+---
+
+#### 🏰 保卫村庄（VillageDefense）
+
+**核心概念**：玩家保卫村庄核心建筑（CORE），通过建造防御塔/城墙/资源建筑、招募单位来抵御一波又一波的敌人进攻。核心血量归零即失败，存活到最后一波即胜利。
+
+**枚举**
+
+```java
+VillageDefense.GameState    // WAITING, COUNTDOWN, BUILD_PHASE, WAVE_ACTIVE, WAVE_INTERVAL, ENDING
+VillageDefense.BuildingType // CORE, TOWER_ARROW, TOWER_MAGIC, TOWER_CANNON, WALL, GATE,
+                            // GOLD_MINE, LUMBER_CAMP, BARRACKS, BLACKSMITH, WELL, FARM, VILLAGER_HOUSE
+VillageDefense.UnitType     // VILLAGER, GUARD, ARCHER, KNIGHT, MAGE, HEALER, WORKER
+VillageDefense.EnemyType    // RAIDER, ARCHER, GRUNT, BRUTE, SHAMAN, BOSS_WARCHIEF, BOSS_BEHEMOTH
+```
+
+**注册竞技场**
+
+```java
+VillageDefense vd = api.villageDefense();
+
+vd.registerArena(
+    "vd1",
+    "村庄保卫-1",
+    "world",
+    1,                   // 最少玩家
+    8,                   // 最大玩家
+    lobbyLoc,            // 大厅
+    specLoc,             // 观战点
+    coreLoc,             // 核心建筑位置
+    List.of(spawn1, spawn2),            // 玩家出生点
+    List.of(enemySpawn1, enemySpawn2),  // 敌人生成点
+    80,                  // 地图半径
+    30,                  // 最大波次
+    180,                 // 建造阶段时间（秒）
+    30,                  // 波次间隔（秒）
+    400.0,               // 核心最大血量
+    true                 // 是否允许建造
+);
+```
+
+**玩家加入 / 开始**
+
+```java
+vd.join(player, "vd1");
+vd.startCountdown("vd1", 10);
+vd.forceStart("vd1");       // 跳过倒计时直接进入建造阶段
+vd.forceEnd("vd1", true);   // true=胜利, false=失败
+```
+
+**建造建筑**
+
+```java
+VillageDefense.Building core = vd.build(player, VillageDefense.BuildingType.CORE, coreLoc);
+VillageDefense.Building tower = vd.build(player, VillageDefense.BuildingType.TOWER_ARROW, towerLoc);
+VillageDefense.Building wall  = vd.build(player, VillageDefense.BuildingType.WALL, wallLoc);
+VillageDefense.Building mine  = vd.build(player, VillageDefense.BuildingType.GOLD_MINE, mineLoc);
+
+// 升级建筑
+vd.upgradeBuilding(player, tower);
+
+// 修复建筑
+vd.repairBuilding(player, tower, 50.0);
+
+// 拆除建筑（核心不可拆除）
+vd.demolish(player, tower);
+```
+
+**建筑属性查询**
+
+```java
+Building b = vd.build(player, VillageDefense.BuildingType.TOWER_CANNON, loc);
+b.type();           // TOWER_CANNON
+b.level();          // 当前等级
+b.maxLevel();       // 最大等级
+b.health();         // 当前血量
+b.maxHealth();      // 最大血量
+b.attackRange();    // 攻击范围
+b.attackDamage();   // 攻击伤害
+b.attackSpeedTicks(); // 攻击间隔（tick）
+b.resourcePerTick();  // 每 tick 产出资源（金矿/伐木场等）
+b.upgrade();          // 升级
+b.repair(100);        // 修复
+b.setEnabled(false);  // 禁用
+```
+
+**生成单位**
+
+```java
+VillageDefense.Unit guard = vd.spawnUnit(game, VillageDefense.UnitType.GUARD, spawnLoc, barracksBuilding);
+VillageDefense.Unit archer = vd.spawnUnit(game, VillageDefense.UnitType.ARCHER, spawnLoc, barracksBuilding);
+
+// 单位操作
+guard.attack(targetEntity);
+guard.moveTo(newLoc);
+guard.heal(20.0);
+guard.isAlive();
+vd.removeUnit(guard);
+```
+
+**资源系统**
+
+```java
+vd.grantResource(player, "gold", 100);    // 给予资源
+boolean ok = vd.spendResource(player, "gold", 50);  // 消耗资源
+int gold = vd.getResource(player, "gold"); // 查询资源
+// 资源类型: gold, wood, stone, iron
+```
+
+**建筑 / 单位 / 敌人属性配置**
+
+```java
+// 设置建筑花费（1 级）
+vd.setBuildingCost(VillageDefense.BuildingType.TOWER_ARROW, Map.of("gold", 100, "wood", 50));
+
+// 获取指定等级花费（自动按 1.5^level 递增）
+Map<String, Integer> cost = vd.getBuildingCost(VillageDefense.BuildingType.TOWER_ARROW, 3);
+
+// 设置建筑属性
+vd.setBuildingStats(VillageDefense.BuildingType.TOWER_ARROW, 2, Map.of("health", 150.0, "damage", 8));
+
+// 设置单位花费 / 属性
+vd.setUnitCost(VillageDefense.UnitType.KNIGHT, Map.of("gold", 100, "iron", 20));
+vd.setUnitStats(VillageDefense.UnitType.KNIGHT, Map.of("health", 60.0, "damage", 10, "armor", 5, "speed", 1.0));
+
+// 设置敌人属性
+vd.setEnemyStats(VillageDefense.EnemyType.BRUTE, Map.of("health", 100.0, "damage", 10.0, "speed", 0.8));
+```
+
+**自定义波次敌人**
+
+```java
+vd.addWaveSpawn("vd1", 5, new VillageDefense.EnemySpawn() {
+    @Override public EnemyType type() { return EnemyType.BRUTE; }
+    @Override public int count() { return 5; }
+    @Override public int intervalTicks() { return 60; }
+    @Override public double healthMul() { return 1.5; }
+    @Override public double damageMul() { return 1.2; }
+    @Override public double speedMul() { return 0.9; }
+});
+
+vd.removeWaveSpawns("vd1", 5);  // 移除第 5 波所有自定义生成
+```
+
+**波次奖励 / 击杀奖励**
+
+```java
+vd.registerWaveReward(
+    10,                                    // 第 10 波
+    Map.of("gold", 100, "wood", 50),       // 每人资源
+    500                                    // 每人得分
+);
+
+vd.registerKillReward(
+    VillageDefense.EnemyType.BOSS_WARCHIEF,
+    200,                                   // 得分
+    50,                                    // 金币
+    List.of(new ItemStack(Material.DIAMOND))  // 掉落
+);
+```
+
+**核心操作**
+
+```java
+vd.damageCore("vd1", 50.0, enemyEntity);  // 对核心造成伤害
+vd.healAllBuildings("vd1", 0.5);           // 修复所有建筑 50% 血量
+
+// 查询附近实体
+List<LivingEntity> enemies = vd.findEnemiesNear(centerLoc, 20.0);
+List<Building> towers = vd.findBuildingsNear(centerLoc, 30.0, VillageDefense.BuildingType.TOWER_ARROW);
+```
+
+**建造限制**
+
+```java
+vd.setBuildLimitPerPlayer("vd1", VillageDefense.BuildingType.TOWER_ARROW, 5);
+int limit = vd.getBuildLimitPerPlayer("vd1", VillageDefense.BuildingType.TOWER_ARROW);
+```
+
+**事件监听**
+
+```java
+vd.onEvent(e -> {
+    switch (e.type()) {
+        case BUILD_START       -> api.broadcast("建造阶段开始！抓紧时间建设防御");
+        case WAVE_START        -> {
+            VillageDefense.Wave w = (VillageDefense.Wave) e.data();
+            api.broadcast("第 " + w.number() + " 波敌人来袭！");
+        }
+        case BUILDING_BUILT    -> {
+            VillageDefense.Building b = (VillageDefense.Building) e.data();
+            e.player().sendMessage("建造了 " + b.type().name());
+        }
+        case BUILDING_DESTROYED -> {
+            VillageDefense.Building b = (VillageDefense.Building) e.data();
+            api.broadcast("建筑被摧毁: " + b.type().name());
+        }
+        case CORE_DAMAGED      -> {
+            double hp = e.game().coreHealth();
+            api.broadcast("核心受到攻击！剩余血量: " + (int) hp);
+        }
+        case CORE_DESTROYED    -> api.broadcast("核心被摧毁！村庄陷落！");
+        case ENEMY_KILL        -> {
+            int score = (int) e.data();
+            e.player().sendMessage("击杀敌人 + " + score + " 分");
+        }
+        case VICTORY           -> api.broadcast("村庄保卫成功！全员胜利！");
+        case DEFEAT            -> api.broadcast("村庄陷落...游戏失败");
+    }
+});
+```
+
+**玩家统计**
+
+```java
+int waves     = vd.getWavesSurvived(player, "vd1");
+int bestWave  = vd.getBestWave(player, "vd1");
+int bestScore = vd.getBestScore(player, "vd1");
+int buildings = vd.getBuildingsBuilt(player, "vd1");
+int units     = vd.getUnitsSpawned(player, "vd1");
+int played    = vd.getGamesPlayed(player, "vd1");
+int won       = vd.getGamesWon(player, "vd1");
+int kills     = vd.getTotalKills(player, "vd1");
+vd.resetStats("vd1", player);
+```
+
+---
+
+#### 玩法 API 通用说明
+
+**生命周期**
+
+所有玩法模块均为懒加载，首次调用 `api.bedwars()` / `api.pvp()` / `api.horde()` / `api.villageDefense()` 时自动：
+1. 实例化实现类
+2. 注册 Bukkit 事件监听器
+3. 启动 tick 定时任务（1 tick/tick 频率）
+
+插件卸载时 `SF.shutdown()` 会自动调用各模块的 `shutdown()` / `stop()` 方法清理资源。
+
+**线程安全**
+
+| 操作 | 线程安全 | 说明 |
+|------|----------|------|
+| 注册竞技场 / Kit / 规则 | ⚠️ | 建议在 `onEnable` 主线程调用 |
+| 玩家加入 / 离开 | ⚠️ | 必须主线程 |
+| 游戏状态查询 | ✅ | `ConcurrentHashMap` / `CopyOnWriteArrayList` 保证安全 |
+| 事件监听注册 | ⚠️ | 建议主线程 |
+| 统计数据查询 | ✅ | 线程安全 |
+| `forceStart` / `forceEnd` | ⚠️ | 建议主线程 |
+
+> 💡 不确定时，用 `api.run(() -> { ... })` 包裹代码确保主线程执行。
+
+**数据持久化**
+
+玩法模块的统计数据（击杀/死亡/胜率/ELO/最高波次等）存储在内存中的 `ConcurrentHashMap`，插件重启后重置。如需持久化，可通过 `SFApi.database()` 将数据写入 SQLite/MySQL。
+
+**自定义扩展**
+
+每个玩法模块均支持通过事件回调（`onEvent`）进行二次开发，无需继承实现类。如需更深度的定制（如自定义怪物 AI、特殊技能），可直接实例化对应 Impl 类并覆写方法。
+
+```java
+// 直接获取实现类进行高级操作
+SF sf = (SF) SFApi.get();
+BedwarsImpl bwImpl = (BedwarsImpl) sf.bedwars();
+// 可访问实现类内部方法
+```
+
+---
+
 ## ❓ 常见问题
 
 ### 安装相关
@@ -2742,7 +3857,7 @@ database:
 
 **Q: 如何向作者反馈 bug**
 
-A：在 [GitHub Issues](https://github.com/zmb96/ZeroCkate_ServerManagementPlugin/issues) 提交 issue，附上：
+A：在 [GitHub Issues](https://github.com/zmb96/ZeroEngine/issues) 提交 issue，附上：
 
 - SF 插件版本
 - 服务器类型（Paper/Spigot）和版本
@@ -2758,6 +3873,76 @@ A：SF 使用 GPLv3 协议，允许商用、修改、分发，但衍生作品必
 ## 📝 变更日志
 
 本项目版本变更记录遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+
+### [4.0.0] - 2026-08-09
+
+#### 🔄 重大变更
+
+**项目更名为 ZeroEngine**
+- artifactId: `ZeroCkate_ServerApiPlugin` → `ZeroEngine`
+- 插件从「服务器 API 插件」升级为「服务器引擎」
+- GitHub 仓库迁移至 `zmb96/ZeroEngine`
+- 保留全部旧功能，无破坏性变更
+
+#### ✨ 新增
+
+**ZeroEngine 原版操控引擎（v2/feature/engine/）**
+
+5 大引擎模块，全部作为 API 供外部插件调用，引擎本身不参与业务逻辑：
+
+1. **MonsterAttribute（怪物属性操控）**
+   - 设置/获取/重置生物的攻击伤害、生命值、移动速度、护甲、击退抗性、护甲韧性
+   - 按倍率缩放属性（`scale`）
+   - 添加/移除属性修饰器（`addModifier` / `removeModifier`）
+   - 持久化属性修饰（跨 tick 保持，`applyPersistent` / `getPersistent` / `clearPersistent`）
+
+2. **DamageSystem（伤害系统操控）**
+   - 自定义伤害计算公式（`registerDamageModifier`，按优先级链式执行）
+   - 全局/按世界 PvP 开关（`setPvpEnabled`）
+   - 伤害类型倍率（`setDamageMultiplier`，如摔伤减半、火焰免疫）
+   - 护甲穿透（`setArmorPenetration`，0~1 百分比）
+   - 对特定目标设置固定伤害（`setCustomDamage`）
+   - `DamageContext` 接口提供攻击者/受害者/原始伤害/伤害原因/暴击/取消
+
+3. **BlockControl（方块/挖掘操控）**
+   - 修改挖掘速度（`setBreakSpeed`）
+   - 修改爆炸抗性（`setBlastResistance`）
+   - 自定义掉落物和概率（`setDrop`）
+   - 自定义经验掉落范围（`setExpDrop`）
+   - 注册方块破坏处理器（`registerBreakHandler`，可取消破坏）
+   - 工具要求（`setRequireTool`）
+   - 破坏后替换方块（`setReplaceOnBreak`）
+   - 取消区域内方块更新（`cancelBlockUpdate`）
+
+4. **SpawnControl（实体生成操控）**
+   - 创建/注册/移除生成规则（`SpawnRule`：概率、每区块上限、生效世界）
+   - 实体黑名单（`blacklistEntity`，按世界）
+   - 生成上限（`setSpawnCap`，按世界按类型）
+   - 实体类型过滤器（`registerSpawnFilter`）
+   - 生成位置过滤器（`registerLocationFilter`，如出生点保护）
+   - 强制生成（`forceSpawn`）
+   - 清除世界内指定类型实体（`clearEntities`）
+   - 世界实体数量统计（`getEntityCounts`）
+
+5. **ResourcePackManager（资源包管理）**
+   - 创建/注册/发送资源包（`ResourcePack`：URL、SHA1、强制、提示消息）
+   - 批量发送所有资源包（`sendAll`，支持完成回调）
+   - 自定义模型数据注册（`setCustomModelData`）
+   - 自定义音乐注册和播放（`registerMusic` / `playMusic` / `stopMusic`）
+   - 全服音乐控制（`playMusicAll` / `stopMusicAll`）
+   - 默认资源包设置（`setDefaultPack` / `getDefaultPack`）
+
+**API 入口**
+- `SFApi` 新增 5 个方法：`monster()` / `damage()` / `block()` / `spawn()` / `resourcePack()`
+- `SF` 实现懒加载，首次调用时自动初始化并注册事件监听器
+- 全部模块均在 `feature/engine/` 和 `feature/engine/impl/` 目录下
+
+#### 🔧 优化
+
+**代码风格统一**
+- 全项目 `SF.sf().method()` 链式调用改为 `SF sf = SF.sf(); sf.method()` 局部变量写法
+- 涉及 30+ 文件、300+ 处调用点
+- 减少重复方法调用开销，提升可读性
 
 ### [3.0.0] - 2026-08-07
 

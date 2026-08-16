@@ -1,4 +1,4 @@
-name: ZeroCkate_ServerApiPlugin
+name: ZeroEngine
 version: '${version}'
 
 main: server.sf.model.api.v1.main
