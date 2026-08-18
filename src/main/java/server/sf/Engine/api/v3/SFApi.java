@@ -15,6 +15,7 @@ import server.sf.model.api.v3.feature.engine.DamageSystem;
 import server.sf.model.api.v3.feature.engine.MonsterAttribute;
 import server.sf.model.api.v3.feature.engine.ResourcePackManager;
 import server.sf.model.api.v3.feature.engine.SpawnControl;
+import server.sf.model.api.v3.feature.gui.GUIManager;
 import server.sf.model.api.v3.feature.enchant.SFAttr;
 import server.sf.model.api.v3.feature.gameplay.bedwars.Bedwars;
 import server.sf.model.api.v3.feature.gameplay.horde.Horde;
@@ -68,6 +69,8 @@ public interface SFApi {
     SpawnControl spawn();
 
     ResourcePackManager resourcePack();
+
+    GUIManager gui();
 
     Bedwars bedwars();
 

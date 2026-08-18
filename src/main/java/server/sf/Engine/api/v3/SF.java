@@ -17,6 +17,8 @@ import server.sf.model.api.v3.feature.engine.DamageSystem;
 import server.sf.model.api.v3.feature.engine.MonsterAttribute;
 import server.sf.model.api.v3.feature.engine.ResourcePackManager;
 import server.sf.model.api.v3.feature.engine.SpawnControl;
+import server.sf.model.api.v3.feature.gui.GUIManager;
+import server.sf.model.api.v3.feature.gui.impl.GUIManagerImpl;
 import server.sf.model.api.v3.feature.enchant.EnchantAttributeListener;
 import server.sf.model.api.v3.feature.enchant.EnchantManager;
 import server.sf.model.api.v3.feature.enchant.SEnchantment;
@@ -75,6 +77,7 @@ public final class SF implements SFApi {
     private BlockControl blockCtrl;
     private SpawnControl spawnCtrl;
     private ResourcePackManager resourcePackMgr;
+    private GUIManager guiMgr;
     private Bedwars bedwarsMgr;
     private BedwarsImpl bedwarsImpl;
     private PvPArena pvpArena;
@@ -118,6 +121,7 @@ public final class SF implements SFApi {
             if (instance.pvpImpl != null) instance.pvpImpl.shutdown();
             if (instance.hordeImpl != null) instance.hordeImpl.shutdown();
             if (instance.villageDefImpl != null) instance.villageDefImpl.shutdown();
+            if (instance.guiMgr != null) ((GUIManagerImpl) instance.guiMgr).closeAll();
             instance.events.unregisterAll();
             instance.tickManager.shutdown();
             DatabaseManager.shutdown();
@@ -289,6 +293,16 @@ public final class SF implements SFApi {
             sf.info("[Engine] ResourcePackManager initialized");
         }
         return resourcePackMgr;
+    }
+
+    @Override
+    public GUIManager gui() {
+        if (guiMgr == null) {
+            guiMgr = new GUIManagerImpl(plugin);
+            SF sf = SF.sf();
+            sf.info("[Engine] GUIManager initialized");
+        }
+        return guiMgr;
     }
 
     @Override

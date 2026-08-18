@@ -37,6 +37,7 @@
 - [⚙️ 配置文件](#️-配置文件)
 - [💻 开发者 API](#-开发者-api)
     - [API 接口文档](#api-接口文档)
+    - [📦 箱子 GUI 系统（ChestGUI）](#-箱子-gui-系统chestgui)
     - [玩法功能 API（v3 新增）](#玩法功能-apiv3-新增)
         - [🛏️ 起床战争（Bedwars）](#-起床战争bedwars)
         - [⚔️ PVP 竞技（PvPArena）](#-pvp-竞技pvparena)
@@ -2900,6 +2901,201 @@ tp.back(player);
 
 ---
 
+### 📦 箱子 GUI 系统（ChestGUI）
+
+ZeroEngine 3.2.1+ 提供纯 Java 的箱子 GUI 系统，无需 YAML 配置，链式调用构建交互式菜单。
+
+#### 核心 API
+
+```java
+public interface GUIManager {
+    ChestGUI create();
+    ChestGUI create(String title, int rows);
+    ChestGUI create(String title, int rows, boolean readonly);
+    void closeAll();
+}
+```
+
+通过 `SFApi.gui()` 获取：
+
+```java
+GUIManager guiMgr = SF.sf().gui();
+ChestGUI myGui = guiMgr.create("我的菜单", 3);
+```
+
+#### ChestGUI 接口能力
+
+| 方法 | 说明 |
+|------|------|
+| `title(String)` | 设置标题 |
+| `rows(int)` / `size(int)` | 设置行数（1-6）或格数 |
+| `item(slot, ItemStack)` | 在指定格子放物品 |
+| `item(slot, ItemStack, onClick)` | 放物品并绑定点击回调 |
+| `item(row, col, ...)` | 按行列坐标放置 |
+| `fill(ItemStack)` | 填充所有空位 |
+| `border(ItemStack)` | 填充边框 |
+| `fillRange(start, end, ItemStack)` | 填充指定范围 |
+| `clear(slot)` / `clear()` | 清除指定格 / 全部 |
+| `onOpen(Consumer<Player>)` | 打开回调 |
+| `onClose(Consumer<Player>)` | 关闭回调 |
+| `onAnyClick(Consumer<ClickContext>)` | 任意点击回调 |
+| `readonly(boolean)` | 是否禁止拿取物品（默认 true） |
+| `pagination(items, perPage)` | 分页显示物品列表 |
+| `page(int)` / `nextPage()` / `prevPage()` | 翻页 |
+| `refresh()` / `refresh(Player)` | 刷新界面 |
+| `open(Player)` / `close(Player)` / `closeAll()` | 打开/关闭 |
+
+#### ClickContext
+
+```java
+interface ClickContext {
+    Player player();          // 点击的玩家
+    int slot();               // 原始槽位
+    int row();                // 行（0-5）
+    int col();                // 列（0-8）
+    ItemStack cursor();       // 鼠标上的物品
+    ItemStack current();      // 被点击的物品
+    boolean isShiftClick();   // 是否 Shift 点击
+    boolean isRightClick();   // 是否右键
+    ClickType type();         // 点击类型枚举
+    ChestGUI gui();           // 所属 GUI
+}
+```
+
+#### 完整示例：服务器选择菜单
+
+```java
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import server.sf.model.api.v3.SF;
+import server.sf.model.api.v3.feature.gui.ChestGUI;
+import server.sf.model.api.v3.feature.gui.GUIManager;
+
+public class ServerMenu {
+
+    public static void open(Player player) {
+        GUIManager mgr = SF.sf().gui();
+
+        ChestGUI gui = mgr.create("§8» §b选择服务器 §8«", 3);
+
+        // 边框
+        gui.border(Material.GRAY_STAINED_GLASS_PANE, " ");
+
+        // 生存服
+        gui.item(1, 2, Material.GRASS_BLOCK, "§a生存服", ctx -> {
+            player.sendMessage("§a正在传送到生存服...");
+            player.performCommand("server survival");
+            ctx.gui().close(player);
+        }, "§7点击进入", "§7在线: 42人");
+
+        // 小游戏服
+        gui.item(1, 4, Material.DIAMOND_SWORD, "§b小游戏服", ctx -> {
+            player.sendMessage("§b正在传送到小游戏服...");
+            player.performCommand("server games");
+            ctx.gui().close(player);
+        }, "§7点击进入", "§7在线: 18人");
+
+        // 创造服
+        gui.item(1, 6, Material.BRICKS, "§e创造服", ctx -> {
+            player.sendMessage("§e正在传送到创造服...");
+            player.performCommand("server creative");
+            ctx.gui().close(player);
+        }, "§7点击进入", "§7在线: 7人");
+
+        // 关闭按钮
+        gui.item(2, 4, Material.BARRIER, "§c关闭菜单", ctx -> {
+            ctx.gui().close(player);
+        });
+
+        gui.onClose(p -> p.sendMessage("§7菜单已关闭"));
+
+        gui.open(player);
+    }
+}
+```
+
+#### 分页示例：物品浏览器
+
+```java
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+import server.sf.model.api.v3.SF;
+import server.sf.model.api.v3.feature.gui.ChestGUI;
+import server.sf.model.api.v3.feature.gui.GUIManager;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ItemBrowser {
+
+    public static void open(Player player, List<ItemStack> allItems) {
+        GUIManager mgr = SF.sf().gui();
+
+        ChestGUI gui = mgr.create("§8物品浏览器 §7(第1页)", 6);
+        gui.readonly(true);
+
+        // 分页：每页 45 格（前5行），最后一行放导航
+        gui.pagination(allItems, 45);
+
+        // 底部导航栏
+        gui.item(5, 0, Material.ARROW, "§a上一页", ctx -> {
+            if (gui.currentPage() > 0) {
+                gui.page(gui.currentPage() - 1);
+                gui.refresh(player);
+            }
+        });
+        gui.item(5, 8, Material.ARROW, "§a下一页", ctx -> {
+            if (gui.currentPage() < gui.totalPages() - 1) {
+                gui.page(gui.currentPage() + 1);
+                gui.refresh(player);
+            }
+        });
+        gui.item(5, 4, Material.BARRIER, "§c关闭", ctx -> {
+            ctx.gui().close(player);
+        });
+
+        gui.open(player);
+    }
+}
+```
+
+#### 动态刷新示例
+
+```java
+// 创建一个可动态刷新的商店界面
+ChestGUI shop = SF.sf().gui().create("§6商店", 3);
+
+// 放置商品（价格随时可变）
+shop.item(1, 1, Material.IRON_INGOT, "§f铁锭 §7(10金币)", ctx -> {
+    if (SF.sf().takeMoney(ctx.player(), 10)) {
+        ctx.player().getInventory().addItem(new ItemStack(Material.IRON_INGOT, 1));
+        ctx.player().sendMessage("§a购买成功！");
+        shop.refresh(ctx.player());  // 刷新界面
+    } else {
+        ctx.player().sendMessage("§c金币不足！");
+    }
+});
+
+// 定时刷新价格
+SF.sf().runTimer(() -> {
+    shop.item(1, 1, Material.IRON_INGOT, "§f铁锭 §7(" + getRandomPrice() + "金币)");
+    shop.refresh();
+}, 0L, 1200L);  // 每60秒刷新一次
+```
+
+#### 要点
+
+- **纯 Java**：无 YAML，所有配置通过链式 API 完成
+- **readonly 模式**：默认开启，玩家无法拿走 GUI 中的物品
+- **自动事件监听**：`GUIManager.create()` 内部自动注册 Listener
+- **自动清理**：玩家退出/关服时自动注销监听器、关闭界面
+- **线程安全**：支持多玩家同时打开同一个 GUI 实例
+- **分页内置**：`pagination()` 自动切页，配合 `prevPage()/nextPage()` 导航
+
+---
+
 ### 玩法功能 API（v3 新增）
 
 v3 新增 4 大玩法模块，均通过 `SFApi` 暴露，采用接口 + 实现分离模式，懒加载（首次调用自动注册事件并启动 tick 线程）。
@@ -3874,7 +4070,22 @@ A：SF 使用 GPLv3 协议，允许商用、修改、分发，但衍生作品必
 
 本项目版本变更记录遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-### [4.0.0] - 2026-08-09
+### [3.2.1] - 2026-08-16
+
+#### ✨ 新增
+
+**箱子 GUI 系统（ChestGUI）**
+- 新增 `feature/gui/` 模块：`ChestGUI` 接口 + `GUIManager` 管理器
+- `SFApi` 新增 `gui()` 方法，返回 `GUIManager`
+- 支持链式调用：title / rows / item / fill / border / fillRange / clear
+- 点击回调系统：`Consumer<ClickContext>`，支持 8 种 ClickType
+- 分页支持：`pagination(items, perPage)` + `page() / nextPage() / prevPage()`
+- 生命周期回调：`onOpen / onClose / onAnyClick`
+- readonly 模式：默认禁止拿取物品
+- 动态刷新：`refresh() / refresh(Player)`
+- 自动事件监听 + 玩家退出/关服自动清理
+
+### [3.2.0] - 2026-08-15
 
 #### 🔄 重大变更
 
