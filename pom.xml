@@ -4,10 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- ===== 修改1：groupId 改为 io.github.你的GitHub用户名 ===== -->
     <groupId>io.github.zmb96</groupId>
     <artifactId>ZeroEngine</artifactId>
-    <version>3.2.1-LTS</version>
+    <version>3.2.2-LTS</version>
     <packaging>jar</packaging>
 
     <name>ZeroEngine</name>
@@ -19,7 +18,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-    <!-- ===== 新增1：许可证信息（必填） ===== -->
     <licenses>
         <license>
             <name>GNU General Public License v3.0</name>
@@ -28,8 +26,12 @@
         </license>
     </licenses>
 
-    <!-- ===== 新增2：开发者信息（必填） ===== -->
     <developers>
+        <developer>
+            <id>ZeroCkate</id>
+            <name>ZeroCkate</name>
+            <email>NOEMAIL@NOEMAIL.COM</email>
+        </developer>
         <developer>
             <id>zmb96</id>
             <name>zmb96</name>
@@ -37,7 +39,6 @@
         </developer>
     </developers>
 
-    <!-- ===== 新增3：源码管理地址（必填） ===== -->
     <scm>
         <connection>scm:git:git://github.com/zmb96/ZeroEngine.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/zmb96/ZeroEngine.git</developerConnection>
@@ -47,7 +48,6 @@
     <build>
         <defaultGoal>clean package</defaultGoal>
         <plugins>
-            <!-- 编译插件 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -58,7 +58,6 @@
                 </configuration>
             </plugin>
 
-            <!-- Shade 打包插件 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -70,7 +69,6 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <!-- 排除 provided 范围的依赖 -->
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
@@ -85,8 +83,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <!-- ===== 新增4：源码包插件 ===== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -100,8 +96,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <!-- ===== 新增5：JavaDoc 插件 ===== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -118,8 +112,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <!-- ===== 新增6：GPG 签名插件 ===== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
@@ -137,8 +129,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <!-- ===== 新增7：中央仓库发布插件 ===== -->
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
@@ -157,8 +147,6 @@
             </resource>
         </resources>
     </build>
-
-    <!-- 保留你的 repositories，但发布时不会影响 -->
     <repositories>
         <repository>
             <id>essentialsx-repo</id>
